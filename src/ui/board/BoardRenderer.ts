@@ -9,6 +9,7 @@ import type { GameState, PieceId } from '../../engine/state';
 type Point = { x: number; y: number };
 type Handlers = { onSpace: (key: HexKey) => void; onBlockade: (id: BlockadeId) => void };
 type Meeple = { body: Container; figure: Container; ring: Graphics; at: HexKey | null };
+export type Insets = { top: number; right: number; bottom: number; left: number };
 type Badge = { at: Point; color: number; node: Container; ring: Graphics };
 
 const SIZE = 28;
@@ -131,6 +132,7 @@ export class BoardRenderer {
   private temple: Point = { x: 0, y: 0 };
   private mapBounds: { x: number; y: number; width: number; height: number } | null = null;
   private readonly camera = { x: 0, y: 0, scale: 1 };
+  private insets: Insets = { top: 0, right: 0, bottom: 0, left: 0 };
   private overview = { x: 0, y: 0, scale: 1 };
   private introPending = true;
   private dragged = false;
@@ -215,11 +217,26 @@ export class BoardRenderer {
     this.syncPieces(game, activePiece, events);
   }
 
+  // The HUD and the card tray float over the canvas; the camera frames the part they leave uncovered.
+  setInsets(insets: Insets) {
+    this.insets = insets;
+    this.resize();
+  }
+
+  private viewCenter(): Point {
+    const { width, height } = this.app.screen;
+    const { top, right, bottom, left } = this.insets;
+    return { x: left + (width - left - right) / 2, y: top + (height - top - bottom) / 2 };
+  }
+
   resize() {
     const bounds = this.mapBounds;
     if (!bounds) return;
     const { width, height } = this.app.screen;
-    const scale = Math.min((width - PADDING * 2) / bounds.width, (height - PADDING * 2) / bounds.height);
+    const { top, right, bottom, left } = this.insets;
+    const visibleWidth = Math.max(PADDING * 4, width - left - right);
+    const visibleHeight = Math.max(PADDING * 4, height - top - bottom);
+    const scale = Math.min((visibleWidth - PADDING * 2) / bounds.width, (visibleHeight - PADDING * 2) / bounds.height);
     this.overview = { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2, scale };
     this.applyCamera();
   }
@@ -238,16 +255,15 @@ export class BoardRenderer {
   }
 
   zoomBy(factor: number) {
-    const { width, height } = this.app.screen;
-    this.zoomAt(factor, { x: width / 2, y: height / 2 }, 0.3);
+    this.zoomAt(factor, this.viewCenter(), 0.3);
   }
 
   private zoomAt(factor: number, screen: Point, duration = 0) {
-    const { width, height } = this.app.screen;
+    const center = this.viewCenter();
     const { x, y, scale } = this.camera;
     const zoom = Math.min(MAX_ZOOM, Math.max(this.overview.scale * 0.8, scale * factor));
-    const anchor = { x: x + (screen.x - width / 2) / scale, y: y + (screen.y - height / 2) / scale };
-    this.moveCamera({ x: anchor.x - (screen.x - width / 2) / zoom, y: anchor.y - (screen.y - height / 2) / zoom, scale: zoom }, duration);
+    const anchor = { x: x + (screen.x - center.x) / scale, y: y + (screen.y - center.y) / scale };
+    this.moveCamera({ x: anchor.x - (screen.x - center.x) / zoom, y: anchor.y - (screen.y - center.y) / zoom, scale: zoom }, duration);
   }
 
   private moveCamera(target: { x: number; y: number; scale: number }, duration: number, delay = 0) {
@@ -266,9 +282,9 @@ export class BoardRenderer {
       this.camera.x = Math.min(bounds.x + bounds.width, Math.max(bounds.x, this.camera.x));
       this.camera.y = Math.min(bounds.y + bounds.height, Math.max(bounds.y, this.camera.y));
     }
-    const { width, height } = this.app.screen;
+    const center = this.viewCenter();
     this.world.scale.set(this.camera.scale);
-    this.world.position.set(width / 2 - this.camera.x * this.camera.scale, height / 2 - this.camera.y * this.camera.scale);
+    this.world.position.set(center.x - this.camera.x * this.camera.scale, center.y - this.camera.y * this.camera.scale);
   };
 
   private readonly onWheel = (event: WheelEvent) => {
@@ -299,8 +315,8 @@ export class BoardRenderer {
       const [a, b] = [...this.pointers.values()];
       const middle = this.toCanvas({ x: (a!.x + b!.x) / 2, y: (a!.y + b!.y) / 2 });
       const scale = Math.min(MAX_ZOOM, Math.max(this.overview.scale * 0.8, (this.pinch.scale * Math.hypot(a!.x - b!.x, a!.y - b!.y)) / this.pinch.distance));
-      const { width, height } = this.app.screen;
-      this.moveCamera({ x: this.pinch.anchor.x - (middle.x - width / 2) / scale, y: this.pinch.anchor.y - (middle.y - height / 2) / scale, scale }, 0);
+      const center = this.viewCenter();
+      this.moveCamera({ x: this.pinch.anchor.x - (middle.x - center.x) / scale, y: this.pinch.anchor.y - (middle.y - center.y) / scale, scale }, 0);
       return;
     }
     if (!this.drag) return;
@@ -325,8 +341,8 @@ export class BoardRenderer {
   }
 
   private toWorld(screen: Point): Point {
-    const { width, height } = this.app.screen;
-    return { x: this.camera.x + (screen.x - width / 2) / this.camera.scale, y: this.camera.y + (screen.y - height / 2) / this.camera.scale };
+    const center = this.viewCenter();
+    return { x: this.camera.x + (screen.x - center.x) / this.camera.scale, y: this.camera.y + (screen.y - center.y) / this.camera.scale };
   }
 
   // A drag that ends over a space must not also count as a click on it.

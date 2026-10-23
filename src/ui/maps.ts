@@ -1,10 +1,18 @@
 import { STANDIN_BLOCKADES, STANDIN_ROUTE } from '../content/standin';
 import type { Board } from '../engine/board';
 import { buildBoard } from '../engine/route';
-import type { Difficulty } from '../gen/code';
+import { type Difficulty, mapCode } from '../gen/code';
 import type { GeneratedMap } from '../gen/search';
+import type { Messages } from './i18n/en';
 
-export type GameMap = { board: Board; name: string; summary: string | null };
+export type MapOrigin = { kind: 'standin' } | { kind: 'generated'; difficulty: Difficulty; code: string; playtestRounds: number };
+export type GameMap = { board: Board; origin: MapOrigin };
+
+export const mapTitle = ({ origin }: GameMap, m: Messages) =>
+  origin.kind === 'standin' ? m.maps.standin : m.maps.generated(origin.difficulty, origin.code);
+
+export const mapSummary = ({ origin }: GameMap, m: Messages) =>
+  origin.kind === 'standin' ? null : m.maps.playtested(origin.playtestRounds);
 
 const CODE = /^([EMH])-([0-9A-Z]+)$/;
 const DIFFICULTY_OF: Record<string, Difficulty> = { E: 'easy', M: 'medium', H: 'hard' };
@@ -20,8 +28,7 @@ export const randomSeed = () => Math.floor(Math.random() * 2 ** 31);
 
 export const standinMap = (): GameMap => ({
   board: buildBoard(STANDIN_ROUTE, STANDIN_BLOCKADES, randomSeed()),
-  name: STANDIN_ROUTE.name,
-  summary: null,
+  origin: { kind: 'standin' },
 });
 
 export const generateInWorker = (difficulty: Difficulty, seed: number): Promise<GameMap> =>
@@ -32,8 +39,7 @@ export const generateInWorker = (difficulty: Difficulty, seed: number): Promise<
       const playtests = [...data.playtestRounds].sort((a, b) => a - b);
       resolve({
         board: data.board,
-        name: data.name,
-        summary: `bot playtests finished in ${playtests[Math.floor(playtests.length / 2)]} rounds`,
+        origin: { kind: 'generated', difficulty, code: mapCode(difficulty, seed), playtestRounds: playtests[Math.floor(playtests.length / 2)]! },
       });
     };
     worker.onerror = (error) => {

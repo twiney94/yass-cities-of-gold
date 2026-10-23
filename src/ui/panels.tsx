@@ -1,108 +1,134 @@
-import { useEffect } from 'react';
+import { type CSSProperties, useEffect } from 'react';
 import type { Action } from '../engine/actions';
 import { rankFinishers } from '../engine/rules';
-import type { GameState } from '../engine/state';
-import { cx } from './cx';
+import type { Card, GameState } from '../engine/state';
+import { CardView } from './CardView';
+import { LanguageSwitch } from './LanguageSwitch';
 import { Logo } from './Logo';
+import { cx } from './cx';
+import { useMessages } from './i18n';
 import type { Intents } from './intents';
-import { BOT_LEVEL_LABEL, PLAYER_COLORS, type PlayerLook, cardName } from './labels';
-import type { LogLine, Seat } from './store';
+import type { PlayerLook } from './labels';
+import type { Seat } from './store';
 
 const cardCount = (game: GameState, player: number) => {
   const p = game.players[player]!;
   return p.drawPile.length + p.hand.length + p.played.length + p.discard.length;
 };
 
-type PlayersBarProps = { game: GameState; seats: Seat[]; mapName: string; onQuit: () => void };
+const seatStyle = (player: PlayerLook) => ({ '--seat': player.hex }) as CSSProperties;
 
-export function PlayersBar({ game, seats, mapName, onQuit }: PlayersBarProps) {
+export function HudHead({ mapTitle, onQuit }: { mapTitle: string; onQuit: () => void }) {
+  const m = useMessages();
   return (
-    <header className="players">
+    <header className="hud__block hud__head">
       <Logo small />
-      <span className="players__map muted">{mapName}</span>
-      {game.players.map((player, i) => (
-        <div key={seats[i]!.color} className={cx('player', i === game.turn.player && 'is-current')}>
-          <span className="dot" style={{ background: PLAYER_COLORS[seats[i]!.color].hex }} />
-          <strong>{PLAYER_COLORS[seats[i]!.color].name}</strong>
-          {seats[i]?.kind === 'bot' && <span className="tag">{BOT_LEVEL_LABEL[seats[i].level]} bot</span>}
-          <span className="player__stat">{cardCount(game, i)} cards</span>
-          {player.blockades.length > 0 && <span className="player__stat">blockades {player.blockades.join(', ')}</span>}
-          {player.finishedOrder !== null && <span className="tag tag--gold">in the City of Gold</span>}
-        </div>
-      ))}
-      {game.status.kind === 'finalRound' && <span className="tag tag--gold">Final round</span>}
-      <button type="button" className="btn btn--ghost" onClick={onQuit}>
-        Quit
-      </button>
+      <span className="hud__controls">
+        <LanguageSwitch />
+        <button type="button" className="btn btn--small" onClick={onQuit}>
+          {m.game.quit}
+        </button>
+      </span>
+      <span className="hud__map">{mapTitle}</span>
     </header>
   );
 }
 
-type ActionBarProps = {
+type TurnPanelProps = { game: GameState; player: PlayerLook; hint: string; choosePiece: boolean; botPlayed: Card[] | null };
+
+export function TurnPanel({ game, player, hint, choosePiece, botPlayed }: TurnPanelProps) {
+  const m = useMessages();
+  return (
+    <section className="hud__block hud__turn" style={seatStyle(player)} aria-live="polite">
+      <div className="hud__turn-name">
+        <span className="dot" style={{ background: player.hex }} />
+        {player.name}
+        {game.status.kind === 'finalRound' && <span className="tag tag--gold">{m.game.finalRound}</span>}
+      </div>
+      <p className="hud__hint">
+        {hint}
+        {choosePiece && <span className="muted"> {m.hints.choosePiece}</span>}
+      </p>
+      {botPlayed && botPlayed.length > 0 && (
+        <div className="hud__played" aria-label={m.game.botPlayed(player.name)}>
+          {botPlayed.map((card) => (
+            <CardView key={card.id} id={card.id} type={card.type} size="mini" />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+export function PlayersPanel({ game, seats, players }: { game: GameState; seats: Seat[]; players: PlayerLook[] }) {
+  const m = useMessages();
+  return (
+    <section className="hud__block hud__players">
+      {game.players.map((player, i) => {
+        const seat = seats[i]!;
+        return (
+          <div key={seat.color} className={cx('seat-tile', i === game.turn.player && 'is-current')} style={seatStyle(players[i]!)}>
+            <strong className="seat-tile__name">
+              <span className="dot" style={{ background: players[i]!.hex }} />
+              {players[i]!.name}
+            </strong>
+            {seat.kind === 'bot' && <span className="tag">{m.game.botTag(seat.level)}</span>}
+            <span className="seat-tile__stat">{m.game.cardCount(cardCount(game, i))}</span>
+            {player.blockades.length > 0 && <span className="seat-tile__stat">{m.game.blockades(player.blockades.join(', '))}</span>}
+            {player.finishedOrder !== null && <span className="tag tag--gold">{m.game.inCity}</span>}
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+type TurnActionsProps = {
   game: GameState;
-  player: PlayerLook;
   intents: Intents;
   selectedCount: number;
-  waiting: string | null;
+  locked: boolean;
   onPerform: (actions: Action[]) => void;
   onMarket: () => void;
 };
 
-export function ActionBar({ game, player, intents, selectedCount, waiting, onPerform, onMarket }: ActionBarProps) {
-  const locked = waiting !== null;
+export function TurnActions({ game, intents, selectedCount, locked, onPerform, onMarket }: TurnActionsProps) {
+  const m = useMessages();
   const { turn } = game;
-  const { play } = intents;
-  const ownPieces = game.pieces.filter((p) => p.owner === turn.player && p.at !== 'eldorado').length;
-  const hint = (() => {
-    if (waiting) return waiting;
-    if (turn.pending) return `Choose up to ${turn.pending.max} card(s) in your hand to remove from the game.`;
-    if (turn.movement && turn.movement.remaining > 0 && selectedCount === 0)
-      return `${cardName(turn.movement.card.type)}: ${turn.movement.remaining} ${turn.movement.suit} power left. Click a highlighted space to keep going.`;
-    if (selectedCount === 0 && turn.stage === 'bought') return 'Card bought. You can still play action cards, or end your turn.';
-    if (selectedCount === 0) return 'Select cards: one or more to move, several to pay for rubble or a base camp, or coins to buy.';
-    if (intents.board.size + intents.market.size > 0 || intents.play) return 'Click a highlighted space, blockade or market card.';
-    return 'Nothing to do with this selection.';
-  })();
+  const { play, endTurn, removal } = intents;
   return (
-    <div className="actionbar">
-      <span className="actionbar__turn">
-        <span className="dot" style={{ background: player.hex }} />
-        {player.name}
-      </span>
-      <p className="actionbar__hint">
-        {hint}
-        {!locked && ownPieces > 1 && selectedCount === 0 && !turn.movement && !turn.pending && turn.stage === 'moving' && (
-          <span className="muted"> Click a piece to choose which one moves.</span>
-        )}
-      </p>
-      <button type="button" className={cx('btn', 'btn--market', intents.market.size > 0 && 'is-target')} onClick={onMarket}>
-        Market
+    <>
+      <button type="button" className={cx('btn', 'btn--chunky', 'btn--market', intents.market.size > 0 && 'is-target')} onClick={onMarket}>
+        {m.game.market}
       </button>
       {!locked && play && (
-        <button type="button" className="btn" onClick={() => onPerform([play])}>
-          Play {cardName(game.players[turn.player]!.hand.find((card) => card.id === play.cardId)!.type)}
+        <button type="button" className="btn btn--chunky btn--play" onClick={() => onPerform([play])}>
+          {m.game.play(m.cards[game.players[turn.player]!.hand.find((card) => card.id === play.cardId)!.type])}
         </button>
       )}
       {!locked && turn.pending && (
-        <button type="button" className="btn btn--primary" disabled={!intents.removal} onClick={() => intents.removal && onPerform([intents.removal])}>
-          {selectedCount > 0 ? `Remove ${selectedCount} card(s)` : 'Keep them all'}
+        <button type="button" className="btn btn--chunky btn--primary" disabled={!removal} onClick={() => removal && onPerform([removal])}>
+          {selectedCount > 0 ? m.game.remove(selectedCount) : m.game.keepAll}
         </button>
       )}
-      {!locked && intents.endTurn && (
-        <button type="button" className="btn btn--primary" onClick={() => onPerform([intents.endTurn!])}>
-          {selectedCount > 0 ? `End turn · discard ${selectedCount}` : 'End turn'}
+      {!locked && endTurn && (
+        <button type="button" className="btn btn--chunky btn--primary" onClick={() => onPerform([endTurn])}>
+          {selectedCount > 0 ? m.game.endTurnDiscard(selectedCount) : m.game.endTurn}
         </button>
       )}
-    </div>
+    </>
   );
 }
 
-export function EventLog({ log }: { log: LogLine[] }) {
+export function EventLog({ lines }: { lines: { id: number; text: string }[] }) {
+  const m = useMessages();
   return (
-    <details className="log">
-      <summary>Log · {log.at(-1)?.text}</summary>
+    <details className="hud__block log">
+      <summary>
+        {m.game.log} · {lines.at(-1)?.text}
+      </summary>
       <ol>
-        {[...log].reverse().map((line) => (
+        {[...lines].reverse().map((line) => (
           <li key={line.id}>{line.text}</li>
         ))}
       </ol>
@@ -111,15 +137,15 @@ export function EventLog({ log }: { log: LogLine[] }) {
 }
 
 export function PassScreen({ player, onReveal }: { player: PlayerLook; onReveal: () => void }) {
-  const { name, hex } = player;
+  const m = useMessages();
   return (
     <div className="overlay">
       <div className="overlay__panel">
-        <span className="dot dot--big" style={{ background: hex }} />
-        <h2>{name}'s turn</h2>
-        <p className="muted">Pass the device to {name}. Everyone else, look away from the hand.</p>
+        <span className="dot dot--big" style={{ background: player.hex }} />
+        <h2>{m.game.passTitle(player.name)}</h2>
+        <p className="muted">{m.game.passBody(player.name)}</p>
         <button type="button" className="btn btn--primary" onClick={onReveal}>
-          Show my hand
+          {m.game.showHand}
         </button>
       </div>
     </div>
@@ -129,26 +155,25 @@ export function PassScreen({ player, onReveal }: { player: PlayerLook; onReveal:
 type GameOverProps = { game: GameState; players: readonly PlayerLook[]; onNewGame: () => void; onQuit: () => void };
 
 export function GameOver({ game, players, onNewGame, onQuit }: GameOverProps) {
+  const m = useMessages();
   const ranking = rankFinishers(game);
   const winner = players[ranking[0]!]!;
   return (
     <div className="overlay">
       <div className="overlay__panel">
         <span className="dot dot--big" style={{ background: winner.hex }} />
-        <h2>{winner.name} reaches the City of Gold first!</h2>
+        <h2>{m.game.winner(winner.name)}</h2>
         <ol className="ranking">
           {ranking.map((index) => (
-            <li key={index}>
-              {players[index]!.name} · {game.players[index]!.blockades.length} blockade(s)
-            </li>
+            <li key={index}>{m.game.ranking(players[index]!.name, game.players[index]!.blockades.length)}</li>
           ))}
         </ol>
         <div className="overlay__actions">
           <button type="button" className="btn btn--primary" onClick={onNewGame}>
-            Play again
+            {m.game.playAgain}
           </button>
           <button type="button" className="btn btn--ghost" onClick={onQuit}>
-            Back to menu
+            {m.game.backToMenu}
           </button>
         </div>
       </div>

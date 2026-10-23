@@ -7,10 +7,17 @@ import { CardView } from './CardView';
 import { SuitIcon } from './art/SuitIcon';
 import { CARD_WIDTH } from './cardSizes';
 import { cx } from './cx';
+import { useMessages } from './i18n';
 import type { Intents } from './intents';
 
 const RESERVE = ALL_CARDS.filter((card) => card.supply.from === 'reserve').map((card) => card.type);
 const PREVIEW_HEIGHT = 156;
+const PREVIEW_GAP = 18;
+
+const previewLeft = (pile: DOMRect) =>
+  pile.right + PREVIEW_GAP + CARD_WIDTH.large <= window.innerWidth
+    ? pile.right + PREVIEW_GAP
+    : Math.max(8, pile.left - PREVIEW_GAP - CARD_WIDTH.large);
 
 const formatCoins = (coins: number) => {
   const whole = Math.floor(coins);
@@ -20,6 +27,7 @@ const formatCoins = (coins: number) => {
 type Props = { game: GameState; intents: Intents; coins: number; onPerform: (actions: Action[]) => void };
 
 export function Market({ game, intents, coins, onPerform }: Props) {
+  const m = useMessages();
   const [preview, setPreview] = useState<{ type: CardType; top: number; left: number } | null>(null);
   const { slots, remaining } = game.market;
   const open = slots.includes(null);
@@ -34,7 +42,7 @@ export function Market({ game, intents, coins, onPerform }: Props) {
         data-pile={type}
         onMouseEnter={(event) => {
           const rect = event.currentTarget.getBoundingClientRect();
-          setPreview({ type, top: Math.min(rect.top, window.innerHeight - PREVIEW_HEIGHT - 12), left: rect.left });
+          setPreview({ type, top: Math.min(rect.top, window.innerHeight - PREVIEW_HEIGHT - 12), left: previewLeft(rect) });
         }}
         onMouseLeave={() => setPreview(null)}
       >
@@ -48,29 +56,27 @@ export function Market({ game, intents, coins, onPerform }: Props) {
   };
 
   return (
-    <section className="market">
+    <section className="hud__block market">
       <header className="market__head">
-        <h2>Market</h2>
+        <h2>{m.game.market}</h2>
         {coins > 0 && (
           <span className="market__coins">
-            {formatCoins(coins)} <SuitIcon suit="coin" /> selected
+            {formatCoins(coins)} <SuitIcon suit="coin" /> {m.game.coinsSelected}
           </span>
         )}
       </header>
+      <div className="market__board">
+        {slots.map((type, i) => (type ? pile(type) : <div key={`slot-${i}`} className="pile pile--empty">{m.game.soldOut}</div>))}
+      </div>
+      <p className="market__note muted">{open ? m.game.reserveOpen : m.game.reserveLocked}</p>
       <div className={cx('market__reserve', !open && 'is-locked')}>
         {RESERVE.map((type) =>
           slots.includes(type) || !remaining[type] ? <div key={type} className="pile pile--gone" /> : pile(type),
         )}
       </div>
-      <p className="market__note muted">
-        {open ? 'Reserve open: a pile bought from it moves onto the board.' : 'The reserve opens once a pile on the board sells out.'}
-      </p>
-      <div className="market__board">
-        {slots.map((type, i) => (type ? pile(type) : <div key={`slot-${i}`} className="pile pile--empty">Sold out</div>))}
-      </div>
       {preview &&
         createPortal(
-          <div className="preview" style={{ top: preview.top, left: preview.left - CARD_WIDTH.large - 18 }}>
+          <div className="preview" style={{ top: preview.top, left: preview.left }}>
             <CardView type={preview.type} size="large" />
           </div>,
           document.body,

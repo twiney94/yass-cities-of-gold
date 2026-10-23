@@ -4,8 +4,9 @@ import type { BlockadeId } from '../../engine/board';
 import type { HexKey } from '../../engine/hex';
 import type { TargetKey } from '../../engine/moves';
 import type { GameState, PieceId } from '../../engine/state';
+import { useMessages } from '../i18n';
 import type { Animation } from '../store';
-import { BoardRenderer } from './BoardRenderer';
+import { BoardRenderer, type Insets } from './BoardRenderer';
 
 type Props = {
   game: GameState;
@@ -13,13 +14,17 @@ type Props = {
   targets: ReadonlySet<TargetKey>;
   activePiece: PieceId | null;
   cameraPiece: PieceId | null;
+  ownPiece: PieceId | null;
   focusCue: number;
+  insets: Insets;
   animation: Animation;
   onSpace: (key: HexKey) => void;
   onBlockade: (id: BlockadeId) => void;
 };
 
-export function BoardView({ game, playerColors, targets, activePiece, cameraPiece, focusCue, animation, onSpace, onBlockade }: Props) {
+export function BoardView(props: Props) {
+  const { game, playerColors, targets, activePiece, cameraPiece, ownPiece, focusCue, insets, animation, onSpace, onBlockade } = props;
+  const m = useMessages();
   const hostRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<BoardRenderer | null>(null);
   const handlersRef = useRef({ onSpace, onBlockade });
@@ -73,6 +78,10 @@ export function BoardView({ game, playerColors, targets, activePiece, cameraPiec
   }, []);
 
   useEffect(() => {
+    if (ready) rendererRef.current?.setInsets(insets);
+  }, [ready, insets]);
+
+  useEffect(() => {
     if (ready) rendererRef.current?.setBoard(game.board);
   }, [ready, game.board]);
 
@@ -95,17 +104,17 @@ export function BoardView({ game, playerColors, targets, activePiece, cameraPiec
   return (
     <div className="board" ref={hostRef}>
       <div className="board__controls">
-        <button type="button" className="btn btn--icon" aria-label="Zoom in" onClick={() => rendererRef.current?.zoomBy(1.3)}>
+        <button type="button" className="btn btn--icon" aria-label={m.game.zoomIn} onClick={() => rendererRef.current?.zoomBy(1.3)}>
           +
         </button>
-        <button type="button" className="btn btn--icon" aria-label="Zoom out" onClick={() => rendererRef.current?.zoomBy(1 / 1.3)}>
+        <button type="button" className="btn btn--icon" aria-label={m.game.zoomOut} onClick={() => rendererRef.current?.zoomBy(1 / 1.3)}>
           −
         </button>
         <button type="button" className="btn" onClick={() => rendererRef.current?.showOverview()}>
-          Whole map
+          {m.game.wholeMap}
         </button>
-        <button type="button" className="btn" onClick={() => rendererRef.current?.focusPiece(cameraPiece)}>
-          My pawn
+        <button type="button" className="btn" onClick={() => rendererRef.current?.focusPiece(ownPiece ?? cameraPiece)}>
+          {m.game.myPawn}
         </button>
       </div>
     </div>

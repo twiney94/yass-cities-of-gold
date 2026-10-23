@@ -4,6 +4,8 @@ A deck-building race through generated jungles to the lost City of Gold. Build y
 
 Play against friends on one device, or against bots (Easy, Normal or Strong). Every map is generated for the difficulty you pick and comes with a short code, so a good map can be replayed.
 
+The game speaks English and French: it follows the browser's language and remembers the one you pick.
+
 ## Development
 
 ```bash
@@ -23,4 +25,4 @@ npm run dev
 - `src/engine`: the rules, pure TypeScript with no browser code.
 - `src/bot`: computer opponents.
 - `src/gen`: the map generator (runs in a Web Worker).
-- `src/ui`: React interface, PixiJS board and card art.
+- `src/ui`: React interface, PixiJS board and card art; `src/ui/i18n` holds the English and French text.

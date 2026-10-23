@@ -191,11 +191,19 @@ h3 {
 }
 
 .menu {
+  position: relative;
   height: 100%;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   background: radial-gradient(circle at 50% 22%, #23402f, var(--bg) 72%);
+}
+
+.menu__language {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 1;
 }
 
 .menu__title {
@@ -595,58 +603,19 @@ h3 {
   }
 }
 
-/* Game layout */
+/* Game layout: the board fills the screen; the HUD and the card tray float over it */
 
 .game {
+  --hud-w: 352px;
+  position: relative;
   height: 100%;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
   overflow: hidden;
-}
-
-.players {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 16px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--line);
-}
-
-.players > .btn--ghost {
-  margin-left: auto;
-}
-
-.player {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border: 1px solid transparent;
-  border-radius: 999px;
-}
-
-.player.is-current {
-  border-color: var(--gold);
-  background: var(--panel-raised);
-}
-
-.player__stat {
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.game__main {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 420px;
-  min-height: 0;
+  background: #16261b;
 }
 
 .board {
-  position: relative;
-  min-height: 0;
-  overflow: hidden;
+  position: absolute;
+  inset: 0;
 }
 
 .board canvas {
@@ -657,8 +626,8 @@ h3 {
 
 .board__controls {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 12px;
+  right: 12px;
   z-index: 2;
   display: flex;
   gap: 6px;
@@ -677,15 +646,165 @@ h3 {
   font-weight: 800;
 }
 
-.game__side {
+.btn--chunky {
+  padding: 10px 16px;
+  border: 2px solid rgb(0 0 0 / 35%);
+  border-radius: 12px;
+  font: 700 15px/1.1 var(--display);
+  letter-spacing: 0.03em;
+  box-shadow: 0 4px 0 rgb(0 0 0 / 45%);
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
+}
+
+.btn--chunky:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 rgb(0 0 0 / 45%);
+}
+
+.btn--play {
+  background: var(--action);
+  color: #fff;
+}
+
+/* HUD */
+
+.hud {
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 12px;
+  z-index: 5;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  min-height: 0;
-  padding: 12px;
+  gap: 10px;
+  width: var(--hud-w);
+  padding: 10px;
   overflow-y: auto;
-  background: var(--panel);
-  border-left: 1px solid var(--line);
+  scrollbar-width: thin;
+  border: 3px solid #b8862b;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgb(33 52 40 / 95%), rgb(18 30 23 / 95%));
+  box-shadow:
+    0 0 0 3px #2c1f0b,
+    0 18px 40px rgb(0 0 0 / 50%);
+}
+
+.hud__block {
+  flex: none;
+  padding: 10px 12px;
+  border: 2px solid #0d1710;
+  border-radius: 14px;
+  background: #22362a;
+  box-shadow: 0 4px 0 #0a120d;
+}
+
+.hud__head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 4px 8px;
+  background: linear-gradient(#2b4434, #1d3024);
+}
+
+.hud__controls {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+
+.hud__controls .segmented__option {
+  min-width: 30px;
+  padding: 3px 6px;
+  font-size: 11px;
+}
+
+.hud__map {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.hud__turn {
+  border-top: 6px solid var(--seat);
+}
+
+.hud__turn-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font: 700 22px/1.15 var(--display);
+}
+
+.hud__turn-name .tag {
+  font-family: system-ui, sans-serif;
+}
+
+.hud__hint {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.hud__played {
+  --pile-w: 44px;
+  --pile-h: 61px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.hud__players {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 8px;
+}
+
+.seat-tile {
+  display: grid;
+  justify-items: start;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  padding: 7px 9px;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background: #15231a;
+}
+
+.seat-tile.is-current {
+  border-color: var(--gold);
+  box-shadow: 0 0 12px rgb(242 193 78 / 25%);
+}
+
+.seat-tile__name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.seat-tile__stat {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.seat-tile .tag {
+  font-size: 11px;
+}
+
+.hud__sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .log {
@@ -712,48 +831,53 @@ h3 {
   color: var(--ink);
 }
 
-.actionbar {
-  position: relative;
-  z-index: 3;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
-  background: var(--panel-raised);
-  border-top: 1px solid var(--line);
-}
+/* Tray: draw pile, hand, actions, played cards, discard pile */
 
-.actionbar__turn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 700;
-}
-
-.actionbar__hint {
-  flex: 1 1 260px;
-}
-
-/* Dock: draw pile, hand, played cards, discard pile */
-
-.dock {
-  position: relative;
+.tray {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  left: calc(var(--hud-w) + 36px);
   z-index: 4;
   display: grid;
-  grid-template-columns: 104px minmax(0, 1fr) 180px 200px;
+  grid-template-columns: 92px minmax(0, 1fr) auto 150px 120px;
   align-items: end;
-  gap: 20px;
-  height: 214px;
-  padding: 34px 18px 14px;
-  background: linear-gradient(#1b2c23, #132018);
+  gap: 14px;
+  pointer-events: none;
+}
+
+.tray .card,
+.tray .btn {
+  pointer-events: auto;
 }
 
 .zone {
   display: grid;
   align-content: end;
-  gap: 10px;
+  justify-items: center;
+  gap: 6px;
   min-width: 0;
+}
+
+.zone--hand {
+  justify-items: stretch;
+  padding: 26px 16px 8px;
+  border-radius: 22px;
+  background: rgb(8 16 11 / 45%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 7%);
+}
+
+.zone--played,
+.zone--discard {
+  justify-items: stretch;
+}
+
+.zone--actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding-bottom: 6px;
 }
 
 .zone__label {
@@ -761,7 +885,19 @@ h3 {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--ink);
+  text-shadow:
+    0 1px 2px #000,
+    0 0 8px rgb(0 0 0 / 85%);
+}
+
+.zone__count {
+  justify-self: center;
+  font: 700 16px/1 var(--display);
+  color: #fff;
+  text-shadow:
+    0 2px 0 rgb(0 0 0 / 70%),
+    0 0 8px rgb(0 0 0 / 60%);
 }
 
 .row {
@@ -777,6 +913,10 @@ h3 {
 .row--small {
   --card-w: 76px;
   --card-h: 106px;
+}
+
+.stack {
+  width: var(--card-w);
 }
 
 .row > .card {
@@ -1070,7 +1210,7 @@ h3 {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   justify-items: center;
-  gap: 12px 6px;
+  gap: 12px 4px;
 }
 
 .market__reserve {
@@ -1088,7 +1228,7 @@ h3 {
 }
 
 .market__board {
-  padding: 14px 8px 12px;
+  padding: 12px 6px 10px;
   border-radius: 12px;
   background: linear-gradient(#cfa96d, #a47c42);
   box-shadow:
@@ -1098,8 +1238,8 @@ h3 {
 }
 
 .market {
-  --pile-w: 58px;
-  --pile-h: 80px;
+  --pile-w: 44px;
+  --pile-h: 61px;
 }
 
 .pile {
@@ -1245,33 +1385,122 @@ h3 {
   display: none;
 }
 
+.btn--market {
+  background: #e07a2e;
+  color: #fff;
+}
+
 .btn--market.is-target {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 2px rgb(242 193 78 / 45%);
+  box-shadow:
+    0 4px 0 rgb(0 0 0 / 45%),
+    0 0 0 3px rgb(242 193 78 / 70%);
 }
 
 @media (max-width: 1000px) {
-  .game__main {
-    grid-template-columns: 1fr;
+  .hud {
+    top: 8px;
+    right: 8px;
+    bottom: auto;
+    left: 8px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'logo players controls'
+      'turn turn turn';
+    align-items: center;
+    gap: 6px 10px;
+    width: auto;
+    padding: 6px 8px;
+    overflow: visible;
+    border-width: 2px;
+    border-radius: 14px;
   }
 
-  .game__side {
+  .hud__head {
+    display: contents;
+  }
+
+  .hud__head .logo {
+    grid-area: logo;
+  }
+
+  .hud__controls {
+    grid-area: controls;
+  }
+
+  .hud__map {
+    display: none;
+  }
+
+  .hud__players {
+    grid-area: players;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+  }
+
+  .seat-tile {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    border-width: 1px;
+    border-radius: 999px;
+  }
+
+  .hud__turn {
+    grid-area: turn;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    padding: 6px 10px;
+    border-top: none;
+    border-left: 5px solid var(--seat);
+  }
+
+  .hud__turn-name {
+    font-size: 16px;
+  }
+
+  .hud__hint {
+    flex: 1 1 260px;
+    margin: 0;
+    font-size: 13px;
+  }
+
+  .hud__played {
+    margin: 0;
+  }
+
+  .hud__sheet {
     position: fixed;
     right: 0;
     bottom: 0;
     left: 0;
     z-index: 30;
     max-height: min(80vh, 680px);
-    border-top: 1px solid var(--line);
-    border-left: none;
-    border-radius: 16px 16px 0 0;
+    padding: 12px;
+    overflow-y: auto;
+    border-top: 3px solid #b8862b;
+    border-radius: 18px 18px 0 0;
+    background: #1b2c23;
     box-shadow: 0 -12px 30px rgb(0 0 0 / 50%);
     transform: translateY(105%);
     transition: transform 0.25s ease;
   }
 
-  .game__side.is-open {
+  .hud__sheet.is-open {
     transform: none;
+  }
+
+  .market {
+    --pile-w: 54px;
+    --pile-h: 75px;
   }
 
   .sheet-backdrop {
@@ -1290,42 +1519,71 @@ h3 {
     align-self: flex-end;
   }
 
-  .dock {
-    grid-template-columns: 96px minmax(0, 1fr) 170px;
+  .board__controls {
+    top: 50%;
+    flex-direction: column;
+    transform: translateY(-50%);
   }
 
-  .zone--played {
+  .tray {
+    right: 8px;
+    bottom: 6px;
+    left: 8px;
+    grid-template-columns: 92px minmax(0, 1fr);
+    grid-template-areas:
+      'actions actions'
+      'draw hand';
+    gap: 8px 10px;
+  }
+
+  .zone--draw {
+    grid-area: draw;
+  }
+
+  .zone--hand {
+    grid-area: hand;
+  }
+
+  .zone--actions {
+    grid-area: actions;
+    flex-direction: row;
+    justify-content: flex-end;
+    padding: 0;
+  }
+
+  .zone--played,
+  .zone--discard {
     display: none;
+  }
+
+  .zone__label--compact {
+    display: block;
   }
 }
 
 @media (max-width: 640px) {
-  .players {
-    gap: 6px;
-    padding: 6px 10px;
-  }
-
-  .players__map,
-  .player__stat {
-    display: none;
-  }
-
-  .player {
-    gap: 4px;
-    padding: 2px 6px;
-    font-size: 13px;
-  }
-
-  .players > .btn--ghost {
-    padding: 4px 8px;
-    font-size: 13px;
+  .hud {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'logo controls'
+      'players players'
+      'turn turn';
   }
 
   .logo--small .logo__title {
     font-size: 14px;
   }
 
-  .player .tag {
+  .seat-tile {
+    padding: 1px 6px;
+    font-size: 13px;
+  }
+
+  .seat-tile__stat {
+    display: none;
+  }
+
+  .seat-tile .tag {
     padding: 1px 5px;
     font-size: 10px;
   }
@@ -1335,35 +1593,17 @@ h3 {
     --pile-h: 64px;
   }
 
-  .market__reserve,
-  .market__board {
-    gap: 10px 4px;
-  }
-
-  .actionbar {
-    gap: 8px;
-    padding: 8px 10px;
-  }
-
-  .actionbar__hint {
-    flex-basis: 100%;
-    order: 3;
-    font-size: 13px;
-  }
-
-  .dock {
+  .tray {
     grid-template-columns: 64px minmax(0, 1fr);
-    gap: 10px;
-    height: auto;
-    padding: 26px 10px 10px;
   }
 
-  .zone--discard {
-    display: none;
+  .zone--hand {
+    padding: 20px 8px 6px;
   }
 
-  .zone__label--compact {
-    display: block;
+  .zone--actions .btn--chunky {
+    padding: 8px 12px;
+    font-size: 14px;
   }
 
   .row--large {

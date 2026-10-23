@@ -1,7 +1,8 @@
-import { type CSSProperties, type RefObject, useLayoutEffect, useRef, useState } from 'react';
+import { type CSSProperties, type ReactNode, type Ref, type RefObject, useLayoutEffect, useRef, useState } from 'react';
 import type { Card, CardId, PlayerState } from '../engine/state';
 import { CardView } from './CardView';
 import { CARD_WIDTH, type CardSize } from './cardSizes';
+import { useMessages } from './i18n';
 
 // The card width comes from CSS (--card-w), so the fan spacing follows the breakpoints.
 const useRowMetrics = (ref: RefObject<HTMLElement | null>, fallback: number) => {
@@ -71,27 +72,47 @@ function DrawPile({ cards }: { cards: Card[] }) {
   );
 }
 
-type DockProps = { player: PlayerState; handHidden: boolean; selected: CardId[]; onToggle?: (id: CardId) => void };
+type TrayProps = {
+  ref?: Ref<HTMLElement>;
+  player: PlayerState;
+  handHidden: boolean;
+  selected: CardId[];
+  onToggle?: (id: CardId) => void;
+  actions: ReactNode;
+};
 
-export function Dock({ player, handHidden, selected, onToggle }: DockProps) {
+export function Tray({ ref, player, handHidden, selected, onToggle, actions }: TrayProps) {
+  const m = useMessages();
+  const owned = player.drawPile.length + player.hand.length + player.played.length + player.discard.length;
   return (
-    <section className="dock">
+    <footer className="tray" ref={ref}>
       <div className="zone zone--draw">
-        <span className="zone__label">Draw pile · {player.drawPile.length}</span>
         <DrawPile cards={player.drawPile} />
-        <span className="zone__label zone__label--compact">Discard · {player.discard.length}</span>
+        <span className="zone__count">
+          {player.drawPile.length}/{owned}
+        </span>
+        <span className="zone__label">{m.game.draw}</span>
+        <span className="zone__label zone__label--compact">
+          {m.game.discard} · {player.discard.length}
+        </span>
       </div>
       <div className="zone zone--hand">
         <CardRow cards={player.hand} size="large" maxStep={80} fan faceDown={handHidden} selected={selected} onToggle={onToggle} />
+        <span className="zone__count">
+          {m.game.hand} · {player.hand.length}
+        </span>
       </div>
+      <div className="zone zone--actions">{actions}</div>
       <div className="zone zone--played">
-        <span className="zone__label">Played this turn</span>
+        <span className="zone__label">{m.game.played}</span>
         <CardRow cards={player.played} size="small" maxStep={34} />
       </div>
       <div className="zone zone--discard">
-        <span className="zone__label">Discard · {player.discard.length}</span>
+        <span className="zone__label">
+          {m.game.discard} · {player.discard.length}
+        </span>
         <CardRow cards={player.discard} size="small" maxStep={28} />
       </div>
-    </section>
+    </footer>
   );
 }

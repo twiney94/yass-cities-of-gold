@@ -5,16 +5,17 @@ import { applyActions } from '../engine/rules';
 import { createGame } from '../engine/setup';
 import type { CardId, GameState, PieceId } from '../engine/state';
 import type { Selection } from './intents';
-import { PLAYER_COLORS, type PlayerColor, describeEvents } from './labels';
+import { type LogEntry, type PlayerColor, describeEvents } from './labels';
 import type { GameMap } from './maps';
 
 export type Seat = { color: PlayerColor } & ({ kind: 'human' } | { kind: 'bot'; level: BotLevel });
-export type LogLine = { id: number; text: string };
+export type LogLine = { id: number; entry: LogEntry };
 export type Animation = { id: number; events: GameEvent[] };
 
 // After a turn ends, the cards on screen stay the previous player's (handoff) while their clean-up
-// animates. Then the next player takes the screen: behind a pass screen when another human may be
-// looking, straight away otherwise (a bot, or the only human at the table).
+// animates. Then the next human takes the screen: behind a pass screen when another human may be
+// looking, straight away otherwise. During a bot's turn the screen stays with the last human, so
+// they can plan with the hand they just drew.
 type GameStore = {
   game: GameState | null;
   map: GameMap | null;
@@ -41,10 +42,18 @@ const NO_SELECTION: Selection = { cards: [], pieceId: null };
 const LOG_LENGTH = 60;
 let nextId = 0;
 
-const lines = (texts: string[]): LogLine[] => texts.map((text) => ({ id: nextId++, text }));
+const lines = (entries: LogEntry[]): LogLine[] => entries.map((entry) => ({ id: nextId++, entry }));
 const animation = (events: GameEvent[]): Animation => ({ id: nextId++, events });
 const needsPassScreen = (seats: Seat[], player: number) =>
   seats[player]?.kind === 'human' && seats.filter((seat) => seat.kind === 'human').length > 1;
+
+export const nextViewer = (seats: Seat[], player: number, viewer: number) =>
+  seats[player]?.kind === 'human' || seats[viewer]?.kind !== 'human' ? player : viewer;
+
+const firstViewer = (seats: Seat[]) => {
+  const humans = seats.flatMap((seat, i) => (seat.kind === 'human' ? [i] : []));
+  return nextViewer(seats, 0, humans.length === 1 ? humans[0]! : 0);
+};
 
 export const useGame = create<GameStore>((set, get) => ({
   game: null,
@@ -66,13 +75,13 @@ export const useGame = create<GameStore>((set, get) => ({
       game: createGame({ board: map.board, playerCount: seats.length as 2 | 3 | 4, seed }),
       map,
       seats,
-      viewer: 0,
+      viewer: firstViewer(seats),
       selection: NO_SELECTION,
       handoff: false,
       covered,
       animation: animation([]),
       focusCue: covered ? 0 : 1,
-      log: lines([`New game on ${map.name}${map.summary ? ` (${map.summary})` : ''}`]),
+      log: lines([{ kind: 'newGame' }]),
       error: null,
     });
   },
@@ -90,10 +99,11 @@ export const useGame = create<GameStore>((set, get) => ({
   choosePiece: (pieceId) => set(({ selection }) => ({ selection: { ...selection, pieceId } })),
 
   perform: (actions) => {
-    const { game, seats, selection, log } = get();
+    const { game, selection, log } = get();
     if (!game) return;
     const result = applyActions(game, actions);
     if (!result.ok) {
+      console.warn('Move rejected:', result.error);
       set({ error: result.error });
       return;
     }
@@ -103,9 +113,7 @@ export const useGame = create<GameStore>((set, get) => ({
       selection: turnPassed ? NO_SELECTION : { ...NO_SELECTION, pieceId: selection.pieceId },
       handoff: turnPassed,
       animation: animation(result.events),
-      log: [...log, ...lines(describeEvents(result.events, result.state, seats.map((seat) => PLAYER_COLORS[seat.color])))].slice(
-        -LOG_LENGTH,
-      ),
+      log: [...log, ...lines(describeEvents(result.events, result.state))].slice(-LOG_LENGTH),
       error: null,
     });
   },
@@ -118,12 +126,12 @@ export const useGame = create<GameStore>((set, get) => ({
   },
 
   reveal: () => {
-    const { game } = get();
+    const { game, seats } = get();
     if (game) {
-      set(({ focusCue }) => ({
+      set(({ focusCue, viewer }) => ({
         handoff: false,
         covered: false,
-        viewer: game.turn.player,
+        viewer: nextViewer(seats, game.turn.player, viewer),
         animation: animation([]),
         focusCue: focusCue + 1,
       }));
