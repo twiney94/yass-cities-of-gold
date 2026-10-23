@@ -48,32 +48,38 @@ export function CardView({ type, id, size = 'large', selected, target, onClick, 
   );
 }
 
+const NAME_FIT = 11;
+
 function CardFront({ type }: { type: CardType }) {
   const m = useMessages();
   const { face, supply, singleUse } = CARDS[type];
   const tone = face.kind === 'expedition' ? face.suit : face.kind;
-  const index = face.kind === 'action' ? '✦' : String(face.power);
+  const value = face.kind === 'action' ? '✦' : String(face.power);
   const icon = face.kind === 'expedition' ? <SuitIcon suit={face.suit} /> : face.kind === 'joker' ? <SuitIcon suit="joker" /> : null;
+  const name = m.cards[type];
   return (
     <div className={cx('card__front', `tone-${tone}`)}>
-      <div className="card__band">
-        <span className="card__index">
-          {index}
-          <span className="card__suit">{icon}</span>
-        </span>
-        {singleUse && (
-          <span className="card__once" title={m.game.singleUse}>
-            ✕
-          </span>
-        )}
-        <span className="card__index card__index--right">{index}</span>
-      </div>
-      <div className="card__name">{m.cards[type]}</div>
       <div className="card__art">
         <CardArt type={type} />
       </div>
-      {face.kind === 'action' && <div className="card__text">{m.effects[face.effect]}</div>}
+      <div className="card__medal">
+        <span className="card__value">{value}</span>
+        {icon && <span className="card__suit">{icon}</span>}
+      </div>
+      <div className="card__ribbon">
+        <div className="card__banner">
+          <span className="card__name" style={{ '--fit': Math.min(1, NAME_FIT / name.length) } as CSSProperties}>
+            {name}
+          </span>
+        </div>
+      </div>
       {supply.from !== 'starterDeck' && <div className="card__cost">{supply.cost}</div>}
+      {singleUse && (
+        <span className="card__once" title={m.game.singleUse}>
+          ✕
+        </span>
+      )}
+      {face.kind === 'action' && <div className="card__text">{m.effects[face.effect]}</div>}
     </div>
   );
 }

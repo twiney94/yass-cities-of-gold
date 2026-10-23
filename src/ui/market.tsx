@@ -56,7 +56,7 @@ export function Market({ game, intents, coins, onPerform }: Props) {
   };
 
   return (
-    <section className="hud__block market">
+    <section className={cx('hud__block', 'market', coins > 0 && 'is-buying')}>
       <header className="market__head">
         <h2>{m.game.market}</h2>
         {coins > 0 && (
