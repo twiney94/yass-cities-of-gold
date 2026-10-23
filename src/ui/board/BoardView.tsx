@@ -1,0 +1,108 @@
+import { Application } from 'pixi.js';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { BlockadeId } from '../../engine/board';
+import type { HexKey } from '../../engine/hex';
+import type { TargetKey } from '../../engine/moves';
+import type { GameState, PieceId } from '../../engine/state';
+import type { Animation } from '../store';
+import { BoardRenderer } from './BoardRenderer';
+
+type Props = {
+  game: GameState;
+  targets: ReadonlySet<TargetKey>;
+  activePiece: PieceId | null;
+  cameraPiece: PieceId | null;
+  focusCue: number;
+  animation: Animation;
+  onSpace: (key: HexKey) => void;
+  onBlockade: (id: BlockadeId) => void;
+};
+
+export function BoardView({ game, targets, activePiece, cameraPiece, focusCue, animation, onSpace, onBlockade }: Props) {
+  const hostRef = useRef<HTMLDivElement>(null);
+  const rendererRef = useRef<BoardRenderer | null>(null);
+  const handlersRef = useRef({ onSpace, onBlockade });
+  const [ready, setReady] = useState(false);
+
+  useLayoutEffect(() => {
+    handlersRef.current = { onSpace, onBlockade };
+  });
+
+  useEffect(() => {
+    const host = hostRef.current!;
+    const app = new Application();
+    let disposed = false;
+    let observer: ResizeObserver | null = null;
+    app
+      .init({
+        background: '#16261b',
+        antialias: true,
+        resolution: window.devicePixelRatio,
+        autoDensity: true,
+        width: host.clientWidth,
+        height: host.clientHeight,
+      })
+      .then(() => {
+        if (disposed) {
+          app.destroy(true, { children: true });
+          return;
+        }
+        host.appendChild(app.canvas);
+        const renderer = new BoardRenderer(app, {
+          onSpace: (key) => handlersRef.current.onSpace(key),
+          onBlockade: (id) => handlersRef.current.onBlockade(id),
+        });
+        rendererRef.current = renderer;
+        observer = new ResizeObserver(() => {
+          app.renderer.resize(host.clientWidth, host.clientHeight);
+          renderer.resize();
+        });
+        observer.observe(host);
+        setReady(true);
+      });
+    return () => {
+      disposed = true;
+      observer?.disconnect();
+      if (rendererRef.current) {
+        rendererRef.current.destroy();
+        rendererRef.current = null;
+        app.destroy(true, { children: true });
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (ready) rendererRef.current?.setBoard(game.board);
+  }, [ready, game.board]);
+
+  useEffect(() => {
+    if (ready) rendererRef.current?.update(game, targets, activePiece, animation);
+  }, [ready, game, targets, activePiece, animation]);
+
+  const cameraPieceRef = useRef(cameraPiece);
+  useLayoutEffect(() => {
+    cameraPieceRef.current = cameraPiece;
+  });
+  useEffect(() => {
+    if (ready && focusCue > 0) rendererRef.current?.focusPiece(cameraPieceRef.current);
+  }, [ready, focusCue]);
+
+  return (
+    <div className="board" ref={hostRef}>
+      <div className="board__controls">
+        <button type="button" className="btn btn--icon" aria-label="Zoom in" onClick={() => rendererRef.current?.zoomBy(1.3)}>
+          +
+        </button>
+        <button type="button" className="btn btn--icon" aria-label="Zoom out" onClick={() => rendererRef.current?.zoomBy(1 / 1.3)}>
+          −
+        </button>
+        <button type="button" className="btn" onClick={() => rendererRef.current?.showOverview()}>
+          Whole map
+        </button>
+        <button type="button" className="btn" onClick={() => rendererRef.current?.focusPiece(cameraPiece)}>
+          My pawn
+        </button>
+      </div>
+    </div>
+  );
+}
