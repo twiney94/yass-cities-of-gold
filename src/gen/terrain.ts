@@ -5,7 +5,8 @@ import { type RouteDef, finishHexes, tileOffset } from '../engine/route';
 import { type Layout, chainLayout } from './layout';
 import { type Random, makeRandom } from './random';
 
-// The dials the search turns. Counts are for the whole route; strength and rubble are probabilities.
+// The dials the search turns. Feature amounts are per terrain tile, so long routes stay as varied as short
+// ones; crossings, strength and rubble are probabilities.
 export type Knobs = {
   tiles: number;
   winding: number;
@@ -13,6 +14,7 @@ export type Knobs = {
   villages: number;
   ridges: number;
   peaks: number;
+  crossings: number;
   strength: number;
   rubble: number;
   camps: number;
@@ -20,11 +22,27 @@ export type Knobs = {
 };
 
 type Cell = { hex: Hex; tile: number; terrain: Terrain; calm: boolean };
+type Biome = 'jungle' | 'highlands' | 'delta' | 'plateau';
+type Flavour = { rivers: number; villages: number; ridges: number; peaks: number; strength: number; rubble: number; band: Suit | null };
 
 const TILE = hexDisk(3).sort((a, b) => a.r - b.r || a.q - b.q);
 const ROW_LENGTHS = [4, 5, 6, 7, 6, 5, 4];
 const SUIT_CODE: Record<Suit, string> = { machete: 'G', paddle: 'B', coin: 'Y' };
 const CALM_RADIUS = 2;
+// A band this wide (in hex-size units along the route) cannot be stepped over, since neighbouring hexes
+// are at most √3 apart along any direction.
+const BAND_HALF_WIDTH = 0.9;
+const BAND_SHIFT = 1.6;
+const SAME_GROUP_CHANCE = 0.2;
+
+const BIOMES: Record<Biome, Flavour> = {
+  jungle: { rivers: 0.5, villages: 0.5, ridges: 0.6, peaks: 0.6, strength: 1.4, rubble: 1, band: null },
+  highlands: { rivers: 0.3, villages: 0.6, ridges: 1.8, peaks: 1.5, strength: 1.2, rubble: 1.5, band: null },
+  delta: { rivers: 1.6, villages: 0.4, ridges: 0.3, peaks: 0.3, strength: 0.8, rubble: 0.7, band: 'paddle' },
+  plateau: { rivers: 0.4, villages: 1.6, ridges: 0.4, peaks: 0.5, strength: 0.9, rubble: 0.8, band: 'coin' },
+};
+const GREEN: readonly Biome[] = ['jungle', 'highlands'];
+const WATER_AND_GOLD: readonly Biome[] = ['delta', 'plateau'];
 
 const pixel = ({ q, r }: Hex) => ({ x: Math.sqrt(3) * (q + r / 2), y: 1.5 * r });
 const landscape = (suit: Suit, power: number): Terrain => ({ kind: 'landscape', suit, power });
@@ -50,6 +68,19 @@ export const generateRoute = (knobs: Knobs, seed: number, name: string): RouteDe
   return layout && paintRoute(random, knobs, layout, name);
 };
 
+// Green tiles (jungle, highlands) mostly alternate with water or gold ones (delta, plateau), so the colour
+// along the route keeps changing; the start tile is jungle.
+const chooseBiomes = (random: Random, count: number): Biome[] => {
+  const biomes: Biome[] = ['jungle'];
+  while (biomes.length < count) {
+    const previous = biomes.at(-1)!;
+    const green = GREEN.includes(previous);
+    const group = green !== random.chance(SAME_GROUP_CHANCE) ? WATER_AND_GOLD : GREEN;
+    biomes.push(random.pick(group.filter((biome) => biome !== previous)));
+  }
+  return biomes;
+};
+
 const paintRoute = (random: Random, knobs: Knobs, layout: Layout, name: string): RouteDef => {
   const cells = new Map<HexKey, Cell>();
   layout.centers.forEach((center, tile) => {
@@ -59,9 +90,12 @@ const paintRoute = (random: Random, knobs: Knobs, layout: Layout, name: string):
     }
   });
   const cellAt = (hex: Hex) => cells.get(hexKey(hex));
-  const roll = (high: number) => {
+  const biomes = chooseBiomes(random, layout.centers.length);
+  const flavour = (tile: number) => BIOMES[biomes[tile]!];
+  const amount = (perTile: number) => Math.floor(perTile + random.next());
+  const roll = (high: number, strength = knobs.strength) => {
     const value = random.next();
-    return value < knobs.strength * knobs.strength * high ? 3 : value < knobs.strength * 0.6 ? 2 : 1;
+    return value < strength * strength * high ? 3 : value < strength * 0.6 ? 2 : 1;
   };
 
   const slots = startSlots(layout);
@@ -75,66 +109,106 @@ const paintRoute = (random: Random, knobs: Knobs, layout: Layout, name: string):
     cellAt(hex)!.terrain = { kind: 'start', slot: i + 1 };
   });
 
-  const wild = () => [...cells.values()].filter((cell) => !cell.calm);
-  const plain = () => wild().filter((cell) => cell.terrain.kind === 'landscape' && cell.terrain.suit !== 'paddle');
+  const wild = (tile: number) => [...cells.values()].filter((cell) => !cell.calm && cell.tile === tile);
+  const plain = (tile: number) =>
+    wild(tile).filter((cell) => cell.terrain.kind === 'landscape' && cell.terrain.suit !== 'paddle');
+  const tiles = layout.centers.map((_, tile) => tile);
+  const finishCenter = addHex(layout.centers.at(-1)!, tileOffset(layout.finish));
 
-  for (let i = 0; i < knobs.rivers; i++) {
-    let at = random.pick(wild()).hex;
-    let direction = random.int(6);
-    const length = 5 + random.int(7);
-    for (let step = 0; step < length; step++) {
-      const cell = cellAt(at);
-      if (!cell || cell.calm) break;
-      cell.terrain = landscape('paddle', roll(0.4));
-      if (random.chance(0.35)) direction = (direction + random.pick([-1, 1]) + 6) % 6;
-      at = addHex(at, DIRECTIONS[direction]!);
+  // A band of the biome's colour right across the route makes every path through the tile change colour.
+  for (const tile of tiles) {
+    const band = flavour(tile).band;
+    if (!band || !random.chance(knobs.crossings)) continue;
+    const center = layout.centers[tile]!;
+    const from = pixel(layout.centers[tile - 1] ?? center);
+    const to = pixel(layout.centers[tile + 1] ?? finishCenter);
+    const length = Math.hypot(to.x - from.x, to.y - from.y);
+    const heading = { x: (to.x - from.x) / length, y: (to.y - from.y) / length };
+    const shift = random.between(-BAND_SHIFT, BAND_SHIFT);
+    for (const cell of wild(tile)) {
+      const offset = pixel({ q: cell.hex.q - center.q, r: cell.hex.r - center.r });
+      if (Math.abs(offset.x * heading.x + offset.y * heading.y - shift) < BAND_HALF_WIDTH) {
+        cell.terrain = landscape(band, roll(0.4, knobs.strength * flavour(tile).strength));
+      }
     }
   }
 
-  for (let i = 0; i < knobs.villages; i++) {
-    const candidates = plain();
-    if (candidates.length === 0) break;
-    const blob = [random.pick(candidates)];
-    const size = 3 + random.int(4);
-    for (let tries = 0; blob.length < size && tries < 30; tries++) {
-      const next = cellAt(random.pick(neighbors(random.pick(blob).hex)));
-      if (next && !next.calm && !blob.includes(next) && !(next.terrain.kind === 'landscape' && next.terrain.suit === 'paddle')) blob.push(next);
-    }
-    for (const cell of blob) cell.terrain = landscape('coin', roll(0.5));
-  }
-
-  for (const cell of plain()) {
-    if (cell.terrain.kind !== 'landscape' || cell.terrain.suit !== 'machete') continue;
-    if (random.chance(knobs.strength * 0.45)) cell.terrain = landscape('machete', random.chance(knobs.strength * 0.5) ? 3 : 2);
-  }
-
-  for (let i = 0; i < knobs.ridges; i++) {
-    let at = random.pick(plain()).hex;
-    const length = 2 + random.int(3);
-    for (let step = 0; step < length; step++) {
-      const cell = cellAt(at);
-      if (!cell || cell.calm || cell.terrain.kind !== 'landscape' || cell.terrain.suit === 'paddle') break;
-      cell.terrain = { kind: 'mountain' };
-      at = addHex(at, random.pick(DIRECTIONS));
+  for (const tile of tiles) {
+    for (let i = amount(knobs.rivers * flavour(tile).rivers); i > 0; i--) {
+      const sources = wild(tile);
+      if (sources.length === 0) break;
+      let at = random.pick(sources).hex;
+      let direction = random.int(6);
+      const length = 4 + random.int(6);
+      for (let step = 0; step < length; step++) {
+        const cell = cellAt(at);
+        if (!cell || cell.calm) break;
+        cell.terrain = landscape('paddle', roll(0.4));
+        if (random.chance(0.35)) direction = (direction + random.pick([-1, 1]) + 6) % 6;
+        at = addHex(at, DIRECTIONS[direction]!);
+      }
     }
   }
-  for (let i = 0; i < knobs.peaks; i++) random.pick(plain()).terrain = { kind: 'mountain' };
+
+  for (const tile of tiles) {
+    for (let i = amount(knobs.villages * flavour(tile).villages); i > 0; i--) {
+      const candidates = plain(tile);
+      if (candidates.length === 0) break;
+      const blob = [random.pick(candidates)];
+      const size = 3 + random.int(4);
+      for (let tries = 0; blob.length < size && tries < 30; tries++) {
+        const next = cellAt(random.pick(neighbors(random.pick(blob).hex)));
+        if (next && !next.calm && !blob.includes(next) && !(next.terrain.kind === 'landscape' && next.terrain.suit === 'paddle')) {
+          blob.push(next);
+        }
+      }
+      for (const cell of blob) cell.terrain = landscape('coin', roll(0.5));
+    }
+  }
+
+  for (const tile of tiles) {
+    const strength = knobs.strength * flavour(tile).strength;
+    for (const cell of plain(tile)) {
+      if (cell.terrain.kind !== 'landscape' || cell.terrain.suit !== 'machete') continue;
+      if (random.chance(strength * 0.45)) cell.terrain = landscape('machete', random.chance(strength * 0.5) ? 3 : 2);
+    }
+  }
+
+  for (const tile of tiles) {
+    for (let i = amount(knobs.ridges * flavour(tile).ridges); i > 0; i--) {
+      const candidates = plain(tile);
+      if (candidates.length === 0) break;
+      let at = random.pick(candidates).hex;
+      const length = 2 + random.int(3);
+      for (let step = 0; step < length; step++) {
+        const cell = cellAt(at);
+        if (!cell || cell.calm || cell.terrain.kind !== 'landscape' || cell.terrain.suit === 'paddle') break;
+        cell.terrain = { kind: 'mountain' };
+        at = addHex(at, random.pick(DIRECTIONS));
+      }
+    }
+    for (let i = amount(knobs.peaks * flavour(tile).peaks); i > 0; i--) {
+      const candidates = plain(tile);
+      if (candidates.length > 0) random.pick(candidates).terrain = { kind: 'mountain' };
+    }
+  }
 
   for (const mountain of [...cells.values()].filter((cell) => cell.terrain.kind === 'mountain')) {
     for (const hex of neighbors(mountain.hex)) {
       const cell = cellAt(hex);
       if (!cell || cell.calm || cell.terrain.kind !== 'landscape' || cell.terrain.suit === 'paddle') continue;
-      if (random.chance(knobs.rubble)) cell.terrain = { kind: 'rubble', cards: random.chance(knobs.strength * 0.5) ? 2 : 1 };
+      if (random.chance(Math.min(1, knobs.rubble * flavour(cell.tile).rubble))) {
+        cell.terrain = { kind: 'rubble', cards: random.chance(knobs.strength * 0.5) ? 2 : 1 };
+      }
     }
   }
 
-  layout.centers.forEach((_, tile) => {
-    const count = Math.floor(knobs.camps + random.next());
-    const spots = plain().filter((cell) => cell.tile === tile);
-    for (let i = 0; i < count && spots.length > 0; i++) {
+  for (const tile of tiles) {
+    const spots = plain(tile);
+    for (let i = amount(knobs.camps); i > 0 && spots.length > 0; i--) {
       spots.splice(random.int(spots.length), 1)[0]!.terrain = { kind: 'basecamp', cards: random.chance(knobs.strength * 0.4) ? 2 : 1 };
     }
-  });
+  }
 
   clearWayToFinish(cells, layout, slots);
 

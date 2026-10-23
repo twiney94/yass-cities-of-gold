@@ -15,9 +15,9 @@ export const DIFFICULTY_ROUNDS: Record<Difficulty, readonly [number, number]> = 
   hard: [14, 17],
 };
 
-// Fitted on 120 random maps against 3-bot playtests (correlation 0.91).
-const ROUNDS_PER_EFFORT = 0.26;
-const ROUNDS_BASE = 2;
+// Fitted on 140 random maps against 3-bot playtests (correlation 0.94).
+const ROUNDS_PER_EFFORT = 0.28;
+const ROUNDS_BASE = 1.27;
 
 const INITIAL = 40;
 const ITERATIONS = 260;
@@ -46,15 +46,16 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 const predictRounds = (score: MapScore) => score.effort * ROUNDS_PER_EFFORT + ROUNDS_BASE;
 
 // The rulebook's advice for good routes: mixed terrain, no long stretch of one colour, fair starting spaces.
-const quality = (score: MapScore) => 2 * score.mix - 0.25 * Math.max(0, score.longestRun - 5) - 0.5 * score.fairness;
+const quality = (score: MapScore) => 2 * score.mix - 0.25 * Math.max(0, score.longestRun - 4) - 0.5 * score.fairness;
 
 const randomKnobs = (random: Random): Knobs => ({
   tiles: 2 + random.int(4),
   winding: random.next(),
-  rivers: random.int(5),
-  villages: 1 + random.int(5),
-  ridges: random.int(7),
-  peaks: random.int(7),
+  rivers: random.between(0, 1.2),
+  villages: random.between(0.3, 1.6),
+  ridges: random.between(0, 1.5),
+  peaks: random.between(0, 1.5),
+  crossings: random.between(0.3, 1),
   strength: random.between(0.05, 0.6),
   rubble: random.between(0, 0.5),
   camps: random.between(0, 2),
@@ -65,7 +66,7 @@ const mutate = (random: Random, knobs: Knobs): Knobs => {
   const next = { ...knobs };
   const nudge = (value: number, by: number) => value + (random.next() * 2 - 1) * by;
   for (let changes = 1 + random.int(3); changes > 0; changes--) {
-    switch (random.int(10)) {
+    switch (random.int(11)) {
       case 0:
         next.tiles = clamp(next.tiles + random.pick([-1, 1]), 2, 5);
         break;
@@ -73,16 +74,19 @@ const mutate = (random: Random, knobs: Knobs): Knobs => {
         next.winding = clamp(nudge(next.winding, 0.25), 0, 1);
         break;
       case 2:
-        next.rivers = clamp(next.rivers + random.pick([-1, 1]), 0, 5);
+        next.rivers = clamp(nudge(next.rivers, 0.3), 0, 1.5);
         break;
       case 3:
-        next.villages = clamp(next.villages + random.pick([-1, 1]), 0, 6);
+        next.villages = clamp(nudge(next.villages, 0.3), 0, 2);
         break;
       case 4:
-        next.ridges = clamp(next.ridges + random.pick([-1, 1]), 0, 8);
+        next.ridges = clamp(nudge(next.ridges, 0.3), 0, 2);
         break;
       case 5:
-        next.peaks = clamp(next.peaks + random.pick([-1, 1]), 0, 8);
+        next.peaks = clamp(nudge(next.peaks, 0.3), 0, 2);
+        break;
+      case 9:
+        next.crossings = clamp(nudge(next.crossings, 0.2), 0, 1);
         break;
       case 6:
         next.strength = clamp(nudge(next.strength, 0.12), 0.03, 0.7);

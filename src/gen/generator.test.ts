@@ -9,10 +9,11 @@ import { type Knobs, generateRoute } from './terrain';
 const knobs = (overrides: Partial<Knobs> = {}): Knobs => ({
   tiles: 3,
   winding: 0.5,
-  rivers: 2,
-  villages: 3,
-  ridges: 3,
-  peaks: 3,
+  rivers: 0.6,
+  villages: 0.8,
+  ridges: 0.6,
+  peaks: 0.6,
+  crossings: 0.7,
   strength: 0.3,
   rubble: 0.2,
   camps: 1,
@@ -40,7 +41,7 @@ describe('generateRoute', () => {
   it('always leaves a way from every starting space to the finish, even when crowded with mountains', () => {
     const random = makeRandom(5);
     for (let i = 0; i < 40; i++) {
-      const crowded = knobs({ tiles: 2 + random.int(4), ridges: 8, peaks: 8, winding: random.next() });
+      const crowded = knobs({ tiles: 2 + random.int(4), ridges: 2.5, peaks: 2.5, winding: random.next() });
       const seed = random.int(2 ** 31);
 
       const board = buildBoard(generateRoute(crowded, seed, 'A')!, STANDIN_BLOCKADES, seed);
@@ -58,6 +59,15 @@ describe('generateMap', () => {
   it('names maps with a code that encodes difficulty and seed', () => {
     expect(mapCode('medium', 1234)).toBe('M-YA');
     expect(generateMap('easy', 1234).name).toBe('Easy trail E-YA');
+  });
+
+  it('keeps long hard routes varied: mixed colours and no long stretch of one colour', () => {
+    for (const seed of [11, 22, 33]) {
+      const { score } = generateMap('hard', seed);
+
+      expect(score.mix).toBeGreaterThanOrEqual(0.65);
+      expect(score.longestRun).toBeLessThanOrEqual(5);
+    }
   });
 
   it('orders difficulties by how many rounds bots need', () => {
