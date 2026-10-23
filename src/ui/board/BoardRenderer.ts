@@ -1,7 +1,8 @@
 import { gsap } from 'gsap';
 import { type Application, Container, Graphics, Text } from 'pixi.js';
 import type { GameEvent } from '../../engine/actions';
-import { type BlockadeId, type Board, type Space, type Terrain, separates } from '../../engine/board';
+import { type BlockadeId, type Board, type Requirement, type Space, type Terrain, separates } from '../../engine/board';
+import type { Suit } from '../../engine/cards';
 import { DIRECTIONS, type Hex, type HexKey, addHex, hexDisk, hexDistance, hexKey } from '../../engine/hex';
 import type { TargetKey } from '../../engine/moves';
 import type { GameState, PieceId } from '../../engine/state';
@@ -78,16 +79,140 @@ const shade = (color: number, factor: number): number => {
 
 const terrainColor = (terrain: Terrain): number => (terrain.kind === 'landscape' ? COLORS[terrain.suit] : COLORS[terrain.kind]);
 
-const pipCount = (terrain: Terrain): number =>
-  terrain.kind === 'landscape' ? terrain.power : terrain.kind === 'rubble' || terrain.kind === 'basecamp' ? terrain.cards : 0;
+type Place = (x: number, y: number) => Point;
 
-const drawPips = (g: Graphics, center: Point, count: number, color: number) => {
-  const rows = count > 3 ? [Math.ceil(count / 2), Math.floor(count / 2)] : [count];
-  rows.forEach((inRow, row) => {
-    const y = center.y + (rows.length === 2 ? (row === 0 ? -5 : 5) : 0);
-    for (let i = 0; i < inRow; i++) g.circle(center.x + (i - (inRow - 1) / 2) * 9, y, 3.4);
+// Marks are laid out square around the space's centre, then turned against the board's yaw so they read
+// straight on screen, like print on the tile.
+const decal = (center: Point): Place => {
+  const cos = Math.cos(-YAW);
+  const sin = Math.sin(-YAW);
+  return (x, y) => ({ x: center.x + x * cos - y * sin, y: center.y + x * sin + y * cos });
+};
+
+const shape = (g: Graphics, place: Place, points: number[][]) =>
+  g.poly(points.flatMap(([x, y]) => {
+    const at = place(x!, y!);
+    return [at.x, at.y];
+  }));
+
+const ellipsePoints = (cx: number, cy: number, rx: number, ry: number, degrees: number) => {
+  const turn = (degrees * Math.PI) / 180;
+  return Array.from({ length: 14 }, (_, i) => {
+    const a = (i / 14) * Math.PI * 2;
+    const [x, y] = [Math.cos(a) * rx, Math.sin(a) * ry];
+    return [cx + x * Math.cos(turn) - y * Math.sin(turn), cy + x * Math.sin(turn) + y * Math.cos(turn)];
   });
-  g.fill(color);
+};
+
+const INK = { width: 1, color: COLORS.outline, alpha: 0.75 };
+
+// The machete and paddle follow the suit icons on the cards (24-unit box, scaled down to `size`).
+const drawSuitMark = (g: Graphics, place: Place, suit: Suit, size: number) => {
+  const unit = (points: number[][]) => points.map(([x, y]) => [((x! - 12) * size) / 24, ((y! - 12) * size) / 24]);
+  if (suit === 'machete') {
+    shape(g, place, unit([[8.5, 15.5], [17.5, 3.5], [19.6, 2.3], [21, 3.6], [20.5, 6.2], [11, 18]])).fill(0xf4f6f8).stroke(INK);
+    shape(g, place, unit([[3, 20.5], [7.6, 14.6], [10.2, 16.8], [5.6, 22.6]])).fill(0x7a4a22).stroke(INK);
+  } else if (suit === 'paddle') {
+    shape(g, place, unit([[20.5, 2.5], [22, 4], [11.5, 14.5], [10, 13]])).fill(0x9c6a3a).stroke(INK);
+    shape(g, place, unit(ellipsePoints(7, 17.5, 3.6, 6.4, 45))).fill(0xf4f6f8).stroke(INK);
+  } else {
+    shape(g, place, unit(ellipsePoints(12, 12, 9.5, 9.5, 0))).fill(0xf2c14e).stroke({ width: 1.3, color: 0x7a4f0e });
+    shape(g, place, unit(ellipsePoints(12, 12, 5, 5, 0))).stroke({ width: 1.1, color: 0xa87418 });
+  }
+};
+
+// Cards to give up fan out from the back; a base camp marks them with a cross, as they leave the game.
+const drawCardMarks = (g: Graphics, place: Place, count: number, crossed: boolean) => {
+  const [w, h, dx, dy] = [10, 14, 4.5, -3];
+  const start = { x: (-(count - 1) * dx) / 2, y: (-(count - 1) * dy) / 2 };
+  for (let i = 0; i < count; i++) {
+    const x = start.x + i * dx;
+    const y = start.y + i * dy;
+    const card = [[x - w / 2 + 1.5, y - h / 2], [x + w / 2 - 1.5, y - h / 2], [x + w / 2, y - h / 2 + 1.5], [x + w / 2, y + h / 2 - 1.5],
+      [x + w / 2 - 1.5, y + h / 2], [x - w / 2 + 1.5, y + h / 2], [x - w / 2, y + h / 2 - 1.5], [x - w / 2, y - h / 2 + 1.5]];
+    shape(g, place, card).fill(0xfbf4e3).stroke(INK);
+    shape(g, place, [[x - w / 2 + 2, y - h / 2 + 2], [x + w / 2 - 2, y - h / 2 + 2], [x + w / 2 - 2, y - h / 2 + 4], [x - w / 2 + 2, y - h / 2 + 4]]).fill(0xd9a441);
+  }
+  if (!crossed) return;
+  const x = start.x + (count - 1) * dx;
+  const y = start.y + (count - 1) * dy + 1.5;
+  for (const [ax, ay, bx, by] of [[-3, -3, 3, 3], [3, -3, -3, 3]]) {
+    const a = place(x + ax!, y + ay!);
+    const b = place(x + bx!, y + by!);
+    g.moveTo(a.x, a.y).lineTo(b.x, b.y);
+  }
+  g.stroke({ width: 2, color: 0xb3261e, cap: 'round' });
+};
+
+const drawMarks = (g: Graphics, center: Point, terrain: Terrain) => {
+  const place = decal(center);
+  if (terrain.kind === 'rubble' || terrain.kind === 'basecamp') return drawCardMarks(g, place, terrain.cards, terrain.kind === 'basecamp');
+  if (terrain.kind !== 'landscape') return;
+  const count = terrain.power;
+  const rows = count > 3 ? [Math.ceil(count / 2), Math.floor(count / 2)] : [count];
+  const size = [18, 18, 15, 13][count - 1] ?? 11;
+  rows.forEach((inRow, row) => {
+    const y = rows.length === 2 ? (row === 0 ? -6.5 : 6.5) : 0;
+    for (let i = 0; i < inRow; i++) {
+      const x = (i - (inRow - 1) / 2) * (size + 1);
+      drawSuitMark(g, (px, py) => place(x + px, y + py), terrain.suit, size);
+    }
+  });
+};
+
+type Segment = [Point, Point];
+
+const SEAM_BASE: Record<Suit | 'rubble', [number, number]> = {
+  machete: [0x5c3518, 0x9a6232],
+  paddle: [0x1d5d99, 0x3f95dc],
+  coin: [0x8a5a12, 0xd9a441],
+  rubble: [0x3d3f45, 0x5d6066],
+};
+
+// A blockade's seam shows what clears it: logs to cut, rapids to paddle, a toll of coins, or stones to haul.
+const drawSeam = (g: Graphics, segments: Segment[], requirement: Requirement) => {
+  const look = requirement.kind === 'landscape' ? requirement.suit : 'rubble';
+  const [dark, light] = SEAM_BASE[look];
+  for (const [width, color] of [[13, COLORS.outline], [10, dark], [6, light]] as const) {
+    for (const [a, b] of segments) g.moveTo(a.x, a.y).lineTo(b.x, b.y);
+    g.stroke({ width, color, cap: 'round' });
+  }
+  for (const [a, b] of segments) {
+    const length = Math.hypot(b.x - a.x, b.y - a.y);
+    const along = { x: (b.x - a.x) / length, y: (b.y - a.y) / length };
+    const at = (t: number, offset = 0) => ({ x: a.x + along.x * t - along.y * offset, y: a.y + along.y * t + along.x * offset });
+    const spaced = (gap: number) => {
+      const count = Math.max(1, Math.round(length / gap));
+      return Array.from({ length: count }, (_, i) => ((i + 0.5) * length) / count);
+    };
+    if (look === 'machete') {
+      for (const t of spaced(5)) {
+        const [p, q] = [at(t, -4.5), at(t, 4.5)];
+        g.moveTo(p.x, p.y).lineTo(q.x, q.y);
+      }
+      g.stroke({ width: 1.2, color: 0x3d2310 });
+    } else if (look === 'paddle') {
+      const start = at(0, 0);
+      g.moveTo(start.x, start.y);
+      for (let t = 1.5; t <= length; t += 1.5) {
+        const p = at(t, 2 * Math.sin((t / 7) * Math.PI * 2));
+        g.lineTo(p.x, p.y);
+      }
+      g.stroke({ width: 1.4, color: 0xffffff, alpha: 0.85 });
+    } else if (look === 'coin') {
+      for (const t of spaced(6.5)) {
+        const c = at(t);
+        g.circle(c.x, c.y, 2.6).fill(0xffe08a).stroke({ width: 0.9, color: 0x7a4f0e });
+      }
+    } else {
+      spaced(5.5).forEach((t, i) => {
+        const c = at(t, i % 2 ? 1.6 : -1.6);
+        g.circle(c.x, c.y, i % 3 === 0 ? 3.4 : 2.8)
+          .fill(i % 2 ? 0x9a9ca3 : 0xb8babf)
+          .stroke({ width: 0.8, color: 0x2e3036 });
+      });
+    }
+  }
 };
 
 // The golden city behind the finishing spaces: empty hexes near the river and away from the rest of the route.
@@ -372,8 +497,7 @@ export class BoardRenderer {
       g.moveTo(a!.x, a!.y).lineTo(b!.x, b!.y);
     }
     g.stroke({ width: 2.5, color: 0xffffff, alpha: 0.22, cap: 'round' });
-    const pips = pipCount(space.terrain);
-    if (pips > 0) drawPips(g, center, pips, space.terrain.kind === 'landscape' && space.terrain.suit === 'coin' ? 0x4a3410 : 0xffffff);
+    drawMarks(g, center, space.terrain);
     if (space.finish) {
       for (const dy of [-12, 12]) {
         g.moveTo(center.x - 13, center.y + dy)
@@ -504,21 +628,21 @@ export class BoardRenderer {
     const spaces = Object.values(game.board.spaces).flatMap((space) => space ?? []);
     for (const blockade of game.board.blockades) {
       if (!game.blockades.includes(blockade.id)) continue;
-      const line = new Graphics();
-      const midpoints: Point[] = [];
+      const segments: Segment[] = [];
       for (const space of spaces) {
         const center = toGround(space.hex);
         DIRECTIONS.forEach((direction, i) => {
           const neighbor = game.board.spaces[hexKey(addHex(space.hex, direction))];
           if (!neighbor || hexKey(neighbor.hex) < hexKey(space.hex) || !separates(blockade, space.tile, neighbor.tile)) return;
           const [a, b] = EDGE_CORNERS[i]!.map((c) => corner(center, c));
-          line.moveTo(a!.x, a!.y).lineTo(b!.x, b!.y);
-          midpoints.push({ x: (a!.x + b!.x) / 2, y: (a!.y + b!.y) / 2 });
+          segments.push([a!, b!]);
         });
       }
+      const midpoints = segments.map(([a, b]) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }));
       const requirement = blockade.requirement;
       const color = requirement.kind === 'landscape' ? COLORS[requirement.suit] : COLORS.rubble;
-      line.stroke({ width: 14, color: COLORS.seam, cap: 'round' }).stroke({ width: 8, color, cap: 'round' });
+      const line = new Graphics();
+      drawSeam(line, segments, requirement);
       line.eventMode = 'none';
       this.seams.addChild(line);
 
