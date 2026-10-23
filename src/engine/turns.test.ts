@@ -40,7 +40,7 @@ describe('end of turn', () => {
 });
 
 describe('end of game', () => {
-  it('finishes the round after a player reaches El Dorado, then names the winner', () => {
+  it('finishes the round after a player reaches the City of Gold, then names the winner', () => {
     const state = newGame(trackBoard('G1 FG1'), 4);
     placePiece(state, 1, at(0));
     const [explorer] = setHand(state, 1, 'explorer');
@@ -123,7 +123,7 @@ describe('end of game', () => {
     expect(both.status).toEqual({ kind: 'over', winner: 0 });
   });
 
-  describe('tie-breaks between players who reached El Dorado', () => {
+  describe('tie-breaks between players who reached the City of Gold', () => {
     const finishers = (a: { blockades: number[]; order: number }, b: { blockades: number[]; order: number }) => {
       const state = newGame(trackBoard('G1'));
       [a, b].forEach(({ blockades, order }, i) => {

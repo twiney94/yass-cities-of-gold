@@ -82,7 +82,7 @@ describe('computeIntents', () => {
     expect([...market.keys()]).toEqual(['scout']);
   });
 
-  it('lets a selected Transmitter take any card, reserve included', () => {
+  it('lets a selected Telegraph take any card, reserve included', () => {
     const state = game('G1');
     const [transmitter] = setHand(state, 0, 'transmitter');
 

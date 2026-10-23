@@ -135,6 +135,8 @@ export class BoardRenderer {
   private introPending = true;
   private dragged = false;
   private drag: { x: number; y: number; cameraX: number; cameraY: number } | null = null;
+  private readonly pointers = new Map<number, Point>();
+  private pinch: { distance: number; scale: number; anchor: Point } | null = null;
 
   constructor(app: Application, handlers: Handlers) {
     this.app = app;
@@ -153,6 +155,7 @@ export class BoardRenderer {
     app.canvas.addEventListener('pointerdown', this.onPointerDown);
     window.addEventListener('pointermove', this.onPointerMove);
     window.addEventListener('pointerup', this.onPointerUp);
+    window.addEventListener('pointercancel', this.onPointerUp);
   }
 
   destroy() {
@@ -162,6 +165,7 @@ export class BoardRenderer {
     this.app.canvas.removeEventListener('pointerdown', this.onPointerDown);
     window.removeEventListener('pointermove', this.onPointerMove);
     window.removeEventListener('pointerup', this.onPointerUp);
+    window.removeEventListener('pointercancel', this.onPointerUp);
   }
 
   setBoard(board: Board) {
@@ -268,11 +272,30 @@ export class BoardRenderer {
   };
 
   private readonly onPointerDown = (event: PointerEvent) => {
-    this.dragged = false;
-    this.drag = { x: event.clientX, y: event.clientY, cameraX: this.camera.x, cameraY: this.camera.y };
+    this.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (this.pointers.size === 1) {
+      this.dragged = false;
+      this.drag = { x: event.clientX, y: event.clientY, cameraX: this.camera.x, cameraY: this.camera.y };
+    } else if (this.pointers.size === 2) {
+      this.dragged = true;
+      this.drag = null;
+      const [a, b] = [...this.pointers.values()];
+      const middle = this.toCanvas({ x: (a!.x + b!.x) / 2, y: (a!.y + b!.y) / 2 });
+      this.pinch = { distance: Math.hypot(a!.x - b!.x, a!.y - b!.y), scale: this.camera.scale, anchor: this.toWorld(middle) };
+    }
   };
 
   private readonly onPointerMove = (event: PointerEvent) => {
+    if (!this.pointers.has(event.pointerId)) return;
+    this.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (this.pinch && this.pointers.size >= 2) {
+      const [a, b] = [...this.pointers.values()];
+      const middle = this.toCanvas({ x: (a!.x + b!.x) / 2, y: (a!.y + b!.y) / 2 });
+      const scale = Math.min(MAX_ZOOM, Math.max(this.overview.scale * 0.8, (this.pinch.scale * Math.hypot(a!.x - b!.x, a!.y - b!.y)) / this.pinch.distance));
+      const { width, height } = this.app.screen;
+      this.moveCamera({ x: this.pinch.anchor.x - (middle.x - width / 2) / scale, y: this.pinch.anchor.y - (middle.y - height / 2) / scale, scale }, 0);
+      return;
+    }
     if (!this.drag) return;
     const dx = event.clientX - this.drag.x;
     const dy = event.clientY - this.drag.y;
@@ -282,9 +305,22 @@ export class BoardRenderer {
     this.moveCamera({ x: this.drag.cameraX - dx / scale, y: this.drag.cameraY - dy / scale, scale }, 0);
   };
 
-  private readonly onPointerUp = () => {
-    this.drag = null;
+  private readonly onPointerUp = (event: PointerEvent) => {
+    this.pointers.delete(event.pointerId);
+    if (this.pointers.size < 2) this.pinch = null;
+    const [remaining] = [...this.pointers.values()];
+    this.drag = remaining ? { x: remaining.x, y: remaining.y, cameraX: this.camera.x, cameraY: this.camera.y } : null;
   };
+
+  private toCanvas(client: Point): Point {
+    const rect = this.app.canvas.getBoundingClientRect();
+    return { x: client.x - rect.left, y: client.y - rect.top };
+  }
+
+  private toWorld(screen: Point): Point {
+    const { width, height } = this.app.screen;
+    return { x: this.camera.x + (screen.x - width / 2) / this.camera.scale, y: this.camera.y + (screen.y - height / 2) / this.camera.scale };
+  }
 
   // A drag that ends over a space must not also count as a click on it.
   private tapped(action: () => void) {

@@ -1,5 +1,6 @@
+import type { BotLevel } from '../bot/bot';
 import type { GameEvent } from '../engine/actions';
-import { type ActionEffect, CARDS, type CardType, type Suit } from '../engine/cards';
+import { type ActionEffect, CARDS, type CardType } from '../engine/cards';
 import type { GameState } from '../engine/state';
 
 export const PLAYERS = [
@@ -9,7 +10,7 @@ export const PLAYERS = [
   { name: 'Yellow', color: '#f0c419' },
 ] as const;
 
-export const SUIT_ICON: Record<Suit, string> = { machete: '🗡️', paddle: '🛶', coin: '🪙' };
+export const BOT_LEVEL_LABEL: Record<BotLevel, string> = { easy: 'Easy', normal: 'Normal', strong: 'Strong' };
 
 export const EFFECT_TEXT: Record<ActionEffect, string> = {
   transmitter: 'Take any card for free',
@@ -18,30 +19,6 @@ export const EFFECT_TEXT: Record<ActionEffect, string> = {
   travelLog: 'Draw 2, then remove up to 2',
   compass: 'Draw 3 cards',
   native: 'Move 1 space, ignoring its cost',
-};
-
-export const CARD_ART: Record<CardType, string> = {
-  explorer: '🥾',
-  traveler: '🎒',
-  sailor: '⛵',
-  scout: '🔭',
-  trailblazer: '🪓',
-  pioneer: '🏕️',
-  giantMachete: '🗡️',
-  captain: '⚓',
-  photographer: '📷',
-  journalist: '📰',
-  treasureChest: '💰',
-  millionaire: '💎',
-  jackOfAllTrades: '🃏',
-  adventurer: '🧗',
-  propPlane: '🛩️',
-  transmitter: '📻',
-  cartographer: '🗺️',
-  scientist: '🔬',
-  travelLog: '📔',
-  compass: '🧭',
-  native: '👣',
 };
 
 export const cardName = (type: CardType) => CARDS[type].name;
@@ -87,7 +64,7 @@ const describe = (event: Exclude<GameEvent, { type: 'pieceMoved' }>, game: GameS
     case 'marketPileMoved':
       return `${cardName(event.cardType)} joins the market`;
     case 'pieceArrived':
-      return `${playerName(game.pieces[event.pieceId]!.owner)} reached El Dorado!`;
+      return `${playerName(game.pieces[event.pieceId]!.owner)} reached the City of Gold!`;
     case 'finalRoundStarted':
       return event.player === game.players.length - 1
         ? 'Last player of the round arrived: the game ends after this turn'

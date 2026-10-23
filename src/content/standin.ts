@@ -77,7 +77,7 @@ const highlands: TileDef = {
 };
 
 export const STANDIN_ROUTE: RouteDef = {
-  name: 'Stand-in Trail',
+  name: 'First Expedition',
   start: camp,
   tiles: [
     { tile: jungle, direction: 'downRight' },

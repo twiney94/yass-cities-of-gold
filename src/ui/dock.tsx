@@ -3,16 +3,22 @@ import type { Card, CardId, PlayerState } from '../engine/state';
 import { CardView } from './CardView';
 import { CARD_WIDTH, type CardSize } from './cardSizes';
 
-const useWidth = (ref: RefObject<HTMLElement | null>) => {
-  const [width, setWidth] = useState(0);
+// The card width comes from CSS (--card-w), so the fan spacing follows the breakpoints.
+const useRowMetrics = (ref: RefObject<HTMLElement | null>, fallback: number) => {
+  const [metrics, setMetrics] = useState({ width: 0, cardWidth: fallback });
   useLayoutEffect(() => {
     const element = ref.current;
     if (!element) return;
-    const observer = new ResizeObserver(([entry]) => setWidth(entry!.contentRect.width));
+    const measure = () =>
+      setMetrics({
+        width: element.clientWidth,
+        cardWidth: Number.parseFloat(getComputedStyle(element).getPropertyValue('--card-w')) || fallback,
+      });
+    const observer = new ResizeObserver(measure);
     observer.observe(element);
     return () => observer.disconnect();
-  }, [ref]);
-  return width;
+  }, [ref, fallback]);
+  return metrics;
 };
 
 type RowProps = {
@@ -27,8 +33,7 @@ type RowProps = {
 
 function CardRow({ cards, size, maxStep, fan, faceDown, selected, onToggle }: RowProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const width = useWidth(ref);
-  const cardWidth = CARD_WIDTH[size];
+  const { width, cardWidth } = useRowMetrics(ref, CARD_WIDTH[size]);
   const step = cards.length > 1 ? Math.max(4, Math.min(maxStep, (width - cardWidth) / (cards.length - 1))) : 0;
   const offset = fan ? Math.max(0, (width - cardWidth - step * (cards.length - 1)) / 2) : 0;
   const middle = (cards.length - 1) / 2;
@@ -74,6 +79,7 @@ export function Dock({ player, handHidden, selected, onToggle }: DockProps) {
       <div className="zone zone--draw">
         <span className="zone__label">Draw pile · {player.drawPile.length}</span>
         <DrawPile cards={player.drawPile} />
+        <span className="zone__label zone__label--compact">Discard · {player.discard.length}</span>
       </div>
       <div className="zone zone--hand">
         <CardRow cards={player.hand} size="large" maxStep={80} fan faceDown={handHidden} selected={selected} onToggle={onToggle} />

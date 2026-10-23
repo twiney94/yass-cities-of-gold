@@ -12,6 +12,8 @@
   --joker: #ece6d8;
   --action: #8b5cc4;
   --danger: #c9443c;
+  --display: 'Cinzel', Georgia, serif;
+  --display-deco: 'Cinzel Decorative', 'Cinzel', Georgia, serif;
 
   font: 15px/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color: var(--ink);
@@ -40,6 +42,12 @@ h2,
 h3,
 p {
   margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--display);
 }
 
 .muted {
@@ -120,10 +128,36 @@ p {
   background: radial-gradient(circle at 50% 30%, #23402f, var(--bg) 70%);
 }
 
-.setup h1 {
-  font-size: clamp(40px, 9vw, 64px);
-  letter-spacing: 2px;
+.logo {
+  display: inline-grid;
+  justify-items: center;
+  line-height: 1;
+}
+
+.logo__yass {
+  margin-bottom: -0.1em;
+  font: 700 clamp(13px, 2.4vw, 18px) / 1 var(--display);
+  letter-spacing: 0.34em;
   color: var(--gold);
+}
+
+.logo__title {
+  padding: 0 0.04em;
+  font: 900 clamp(38px, 9vw, 72px) / 1.05 var(--display-deco);
+  background: linear-gradient(180deg, #fff4c8 0%, #f6cf5f 38%, #c3841a 60%, #f0c255 100%);
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 0 #5b3a0b) drop-shadow(0 8px 14px rgb(0 0 0 / 45%));
+}
+
+.logo--small .logo__yass {
+  font-size: 8px;
+  letter-spacing: 0.32em;
+}
+
+.logo--small .logo__title {
+  font-size: 17px;
+  filter: drop-shadow(0 1px 0 #5b3a0b);
 }
 
 .setup__choices {
@@ -154,13 +188,6 @@ p {
   padding: 8px 16px;
   background: var(--panel);
   border-bottom: 1px solid var(--line);
-}
-
-.players__title {
-  margin-right: 6px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  color: var(--gold);
 }
 
 .players > .btn--ghost {
@@ -201,6 +228,7 @@ p {
 .board canvas {
   position: absolute;
   inset: 0;
+  touch-action: none;
 }
 
 .board__controls {
@@ -314,15 +342,17 @@ p {
 
 .row {
   position: relative;
-  height: var(--h);
+  height: var(--card-h);
 }
 
 .row--large {
-  --h: 156px;
+  --card-w: 112px;
+  --card-h: 156px;
 }
 
 .row--small {
-  --h: 106px;
+  --card-w: 76px;
+  --card-h: 106px;
 }
 
 .row > .card {
@@ -333,8 +363,8 @@ p {
 /* Cards */
 
 .card {
-  --w: 112px;
-  --h: 156px;
+  --w: var(--card-w, 112px);
+  --h: var(--card-h, 156px);
   position: relative;
   flex: none;
   width: var(--w);
@@ -349,8 +379,8 @@ p {
 }
 
 .card--mini {
-  --w: 58px;
-  --h: 80px;
+  --w: var(--pile-w, 58px);
+  --h: var(--pile-h, 80px);
 }
 
 .card.is-clickable {
@@ -432,11 +462,20 @@ p {
 
 .card__front {
   display: grid;
-  grid-template-rows: auto auto 1fr auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   background: linear-gradient(#fbf4e3, #eadcbd);
   color: #2a2216;
   text-align: center;
   transition: box-shadow 0.15s ease;
+}
+
+.card__front::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgb(201 137 28 / 55%);
+  border-radius: calc(var(--w) * 0.07);
+  pointer-events: none;
 }
 
 .tone-machete {
@@ -500,24 +539,44 @@ p {
 }
 
 .card__name {
-  padding: 4px 4px 0;
-  font-size: calc(var(--w) * 0.09);
-  font-weight: 800;
-  letter-spacing: 0.03em;
+  padding: 4px 4px 3px;
+  font: 700 calc(var(--w) * 0.085) / 1.1 var(--display);
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .card__art {
-  display: grid;
-  place-items: center;
-  font-size: calc(var(--w) * 0.36);
+  min-height: 0;
+  margin: 0 calc(var(--w) * 0.05);
+  overflow: hidden;
+  border: 1px solid #22301f;
+  border-radius: calc(var(--w) * 0.05);
+}
+
+.card-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.card--mini .card__art {
+  margin-bottom: calc(var(--w) * 0.05);
 }
 
 .card__text {
-  padding: 0 6px 22px;
-  font-size: calc(var(--w) * 0.085);
+  min-height: calc(var(--w) * 0.3);
+  padding: 4px 6px 5px calc(var(--w) * 0.29);
+  font-size: calc(var(--w) * 0.08);
   font-weight: 600;
   line-height: 1.15;
+  text-align: left;
+}
+
+.suit-icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.14em;
 }
 
 .card__cost {
@@ -614,10 +673,15 @@ p {
     0 6px 14px rgb(0 0 0 / 35%);
 }
 
+.market {
+  --pile-w: 58px;
+  --pile-h: 80px;
+}
+
 .pile {
   position: relative;
-  width: 58px;
-  height: 80px;
+  width: var(--pile-w);
+  height: var(--pile-h);
 }
 
 .pile > .card {
@@ -628,8 +692,8 @@ p {
 
 .pile__layer {
   position: absolute;
-  width: 58px;
-  height: 80px;
+  width: var(--pile-w);
+  height: var(--pile-h);
   border: 1.5px solid #1d140a;
   border-radius: 6px;
   background: #e8dcc0;
@@ -727,29 +791,6 @@ p {
   box-shadow: 0 6px 16px rgb(0 0 0 / 40%);
 }
 
-@media (max-width: 1000px) {
-  .game__main {
-    grid-template-columns: 1fr;
-    grid-template-rows: minmax(260px, 1fr) auto;
-  }
-
-  .game__side {
-    max-height: 38vh;
-    border-top: 1px solid var(--line);
-    border-left: none;
-  }
-
-  .dock {
-    grid-template-columns: 90px minmax(0, 1fr);
-    height: auto;
-  }
-
-  .zone--played,
-  .zone--discard {
-    display: none;
-  }
-}
-
 .seats {
   display: grid;
   gap: 8px;
@@ -773,6 +814,16 @@ p {
   display: flex;
   gap: 6px;
   margin-left: auto;
+}
+
+.seat__level {
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-raised);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
 }
 
 .btn--small {
@@ -839,5 +890,148 @@ p {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+.btn--market,
+.sheet-close,
+.zone__label--compact {
+  display: none;
+}
+
+.btn--market.is-target {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgb(242 193 78 / 45%);
+}
+
+@media (max-width: 1000px) {
+  .game__main {
+    grid-template-columns: 1fr;
+  }
+
+  .game__side {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 30;
+    max-height: min(80vh, 680px);
+    border-top: 1px solid var(--line);
+    border-left: none;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -12px 30px rgb(0 0 0 / 50%);
+    transform: translateY(105%);
+    transition: transform 0.25s ease;
+  }
+
+  .game__side.is-open {
+    transform: none;
+  }
+
+  .sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 29;
+    background: rgb(0 0 0 / 45%);
+  }
+
+  .btn--market,
+  .sheet-close {
+    display: inline-flex;
+  }
+
+  .sheet-close {
+    align-self: flex-end;
+  }
+
+  .dock {
+    grid-template-columns: 96px minmax(0, 1fr) 170px;
+  }
+
+  .zone--played {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .players {
+    gap: 6px;
+    padding: 6px 10px;
+  }
+
+  .players__map,
+  .player__stat {
+    display: none;
+  }
+
+  .player {
+    gap: 4px;
+    padding: 2px 6px;
+    font-size: 13px;
+  }
+
+  .players > .btn--ghost {
+    padding: 4px 8px;
+    font-size: 13px;
+  }
+
+  .logo--small .logo__title {
+    font-size: 14px;
+  }
+
+  .player .tag {
+    padding: 1px 5px;
+    font-size: 10px;
+  }
+
+  .market {
+    --pile-w: 46px;
+    --pile-h: 64px;
+  }
+
+  .market__reserve,
+  .market__board {
+    gap: 10px 4px;
+  }
+
+  .actionbar {
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .actionbar__hint {
+    flex-basis: 100%;
+    order: 3;
+    font-size: 13px;
+  }
+
+  .dock {
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 10px;
+    height: auto;
+    padding: 26px 10px 10px;
+  }
+
+  .zone--discard {
+    display: none;
+  }
+
+  .zone__label--compact {
+    display: block;
+  }
+
+  .row--large {
+    --card-w: 86px;
+    --card-h: 120px;
+  }
+
+  .zone--draw .row {
+    transform: scale(0.8);
+    transform-origin: left bottom;
+  }
+
+  .seat {
+    min-width: 0;
+    width: min(340px, 100%);
   }
 }

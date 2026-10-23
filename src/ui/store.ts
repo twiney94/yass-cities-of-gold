@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { BotLevel } from '../bot/bot';
 import type { Action, GameEvent } from '../engine/actions';
 import { applyActions } from '../engine/rules';
 import { createGame } from '../engine/setup';
@@ -7,7 +8,7 @@ import type { Selection } from './intents';
 import { describeEvents } from './labels';
 import type { GameMap } from './maps';
 
-export type Seat = 'human' | 'bot';
+export type Seat = { kind: 'human' } | { kind: 'bot'; level: BotLevel };
 export type LogLine = { id: number; text: string };
 export type Animation = { id: number; events: GameEvent[] };
 
@@ -43,7 +44,7 @@ let nextId = 0;
 const lines = (texts: string[]): LogLine[] => texts.map((text) => ({ id: nextId++, text }));
 const animation = (events: GameEvent[]): Animation => ({ id: nextId++, events });
 const needsPassScreen = (seats: Seat[], player: number) =>
-  seats[player] === 'human' && seats.filter((seat) => seat === 'human').length > 1;
+  seats[player]?.kind === 'human' && seats.filter((seat) => seat.kind === 'human').length > 1;
 
 export const useGame = create<GameStore>((set, get) => ({
   game: null,

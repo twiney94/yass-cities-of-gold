@@ -4,6 +4,7 @@ import type { Action } from '../engine/actions';
 import { ALL_CARDS, type CardType } from '../engine/cards';
 import type { GameState } from '../engine/state';
 import { CardView } from './CardView';
+import { SuitIcon } from './art/SuitIcon';
 import { CARD_WIDTH } from './cardSizes';
 import { cx } from './cx';
 import type { Intents } from './intents';
@@ -50,7 +51,11 @@ export function Market({ game, intents, coins, onPerform }: Props) {
     <section className="market">
       <header className="market__head">
         <h2>Market</h2>
-        {coins > 0 && <span className="market__coins">{formatCoins(coins)} 🪙 selected</span>}
+        {coins > 0 && (
+          <span className="market__coins">
+            {formatCoins(coins)} <SuitIcon suit="coin" /> selected
+          </span>
+        )}
       </header>
       <div className={cx('market__reserve', !open && 'is-locked')}>
         {RESERVE.map((type) =>

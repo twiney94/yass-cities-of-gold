@@ -25,7 +25,7 @@ describe('buying', () => {
     const state = game();
     const hand = setHand(state, 0, 'traveler', 'photographer', 'explorer');
 
-    expect(rejection(state, { type: 'buy', cardType: 'transmitter', cardIds: ids(hand) })).toBe('Transmitter costs 4 coins');
+    expect(rejection(state, { type: 'buy', cardType: 'transmitter', cardIds: ids(hand) })).toBe('Telegraph costs 4 coins');
   });
 
   it('counts jokers and coin items at full value, removing the items used', () => {

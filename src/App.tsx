@@ -1,13 +1,19 @@
-import { useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { STANDIN_ROUTE } from './content/standin';
 import { type Difficulty, mapCode } from './gen/code';
-import { GameScreen } from './ui/GameScreen';
+import { Logo } from './ui/Logo';
 import { cx } from './ui/cx';
-import { PLAYERS } from './ui/labels';
+import type { BotLevel } from './bot/bot';
+import { BOT_LEVEL_LABEL, PLAYERS } from './ui/labels';
 import { generateInWorker, parseMapCode, randomSeed, standinMap } from './ui/maps';
 import { type Seat, useGame } from './ui/store';
 
-const SEAT_KINDS: Seat[] = ['human', 'bot'];
+const loadGameScreen = () => import('./ui/GameScreen');
+const GameScreen = lazy(() => loadGameScreen().then((module) => ({ default: module.GameScreen })));
+
+const BOT_LEVELS: BotLevel[] = ['easy', 'normal', 'strong'];
+const HUMAN: Seat = { kind: 'human' };
+const BOT: Seat = { kind: 'bot', level: 'normal' };
 const DIFFICULTIES: { value: Difficulty; label: string }[] = [
   { value: 'easy', label: 'Easy' },
   { value: 'medium', label: 'Medium' },
@@ -19,15 +25,25 @@ type MapChoice = 'standin' | Difficulty;
 export default function App() {
   const playing = useGame((s) => s.game !== null);
   const newGame = useGame((s) => s.newGame);
-  const [seats, setSeats] = useState<Seat[]>(['human', 'bot']);
+  const [seats, setSeats] = useState<Seat[]>([HUMAN, BOT]);
   const [choice, setChoice] = useState<MapChoice>('medium');
   const [code, setCode] = useState(() => mapCode('medium', randomSeed()));
   const [generating, setGenerating] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
 
-  if (playing) return <GameScreen />;
+  useEffect(() => {
+    void loadGameScreen();
+  }, []);
 
-  const resize = (count: number) => setSeats((current) => Array.from({ length: count }, (_, i) => current[i] ?? 'bot'));
+  if (playing) {
+    return (
+      <Suspense fallback={<div className="setup" />}>
+        <GameScreen />
+      </Suspense>
+    );
+  }
+
+  const resize = (count: number) => setSeats((current) => Array.from({ length: count }, (_, i) => current[i] ?? BOT));
   const setSeat = (index: number, seat: Seat) => setSeats((current) => current.map((s, i) => (i === index ? seat : s)));
   const pick = (next: MapChoice) => {
     setChoice(next);
@@ -56,8 +72,10 @@ export default function App() {
 
   return (
     <div className="setup">
-      <h1>El Dorado</h1>
-      <p className="muted">Race through the jungle to the golden city.</p>
+      <h1>
+        <Logo />
+      </h1>
+      <p className="muted">Race through the jungle to the lost City of Gold.</p>
 
       <section className="setup__section" aria-label="Map">
         <h2>Map</h2>
@@ -98,17 +116,31 @@ export default function App() {
               <span className="dot" style={{ background: PLAYERS[i]!.color }} />
               <strong>{PLAYERS[i]!.name}</strong>
               <span className="seat__kinds" role="group" aria-label={`${PLAYERS[i]!.name} is played by`}>
-                {SEAT_KINDS.map((kind) => (
+                {[HUMAN, BOT].map((kind) => (
                   <button
-                    key={kind}
+                    key={kind.kind}
                     type="button"
-                    className={cx('btn', 'btn--small', seat === kind && 'btn--primary')}
-                    aria-pressed={seat === kind}
-                    onClick={() => setSeat(i, kind)}
+                    className={cx('btn', 'btn--small', seat.kind === kind.kind && 'btn--primary')}
+                    aria-pressed={seat.kind === kind.kind}
+                    onClick={() => seat.kind !== kind.kind && setSeat(i, kind)}
                   >
-                    {kind === 'human' ? 'Human' : 'Bot'}
+                    {kind.kind === 'human' ? 'Human' : 'Bot'}
                   </button>
                 ))}
+                {seat.kind === 'bot' && (
+                  <select
+                    className="seat__level"
+                    aria-label={`${PLAYERS[i]!.name} bot strength`}
+                    value={seat.level}
+                    onChange={(event) => setSeat(i, { kind: 'bot', level: event.target.value as BotLevel })}
+                  >
+                    {BOT_LEVELS.map((level) => (
+                      <option key={level} value={level}>
+                        {BOT_LEVEL_LABEL[level]}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </span>
             </li>
           ))}

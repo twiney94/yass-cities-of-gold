@@ -129,7 +129,7 @@ const payCards = (ctx: Ctx, { pieceId, target, cardIds }: ActionOf<'payCards'>) 
 const playNative = (ctx: Ctx, { cardId, pieceId, target }: ActionOf<'playNative'>) => {
   check(ctx.state.turn.stage === 'moving', 'You cannot move after buying');
   const card = takeFromHand(ctx.player, cardId);
-  check(effectOf(card) === 'native', 'That card is not a Native');
+  check(effectOf(card) === 'native', 'That card is not a Local Guide');
   ctx.state.turn.movement = null;
   const piece = ownPieceOnBoard(ctx, pieceId);
   const destination = resolveTarget(ctx, piece, target);
@@ -140,7 +140,7 @@ const playNative = (ctx: Ctx, { cardId, pieceId, target }: ActionOf<'playNative'
 
 const playTransmitter = (ctx: Ctx, { cardId, take }: ActionOf<'playTransmitter'>) => {
   const card = takeFromHand(ctx.player, cardId);
-  check(effectOf(card) === 'transmitter', 'That card is not a Transmitter');
+  check(effectOf(card) === 'transmitter', 'That card is not a Telegraph');
   playCard(ctx, card, true);
   gainFromMarket(ctx, take, 'transmitter');
 };
@@ -320,7 +320,7 @@ const gainFromMarket = (ctx: Ctx, type: CardType, via: 'purchase' | 'transmitter
 const ownPieceOnBoard = (ctx: Ctx, pieceId: PieceId): PieceOnBoard => {
   const piece = ctx.state.pieces.find((p) => p.id === pieceId);
   check(piece && piece.owner === ctx.playerIndex, 'That is not your piece');
-  check(piece.at !== 'eldorado', 'That piece has already reached El Dorado');
+  check(piece.at !== 'eldorado', 'That piece has already reached the City of Gold');
   return piece as PieceOnBoard;
 };
 
