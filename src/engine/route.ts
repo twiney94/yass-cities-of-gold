@@ -68,7 +68,7 @@ export const buildBoard = (route: RouteDef, blockadeSet: readonly BlockadeDef[],
 
 const toPixel = ({ q, r }: Hex) => ({ x: Math.sqrt(3) * (q + r / 2), y: 1.5 * r });
 
-const finishHexes = (lastTile: Set<HexKey>, lastCenter: Hex, finishCenter: Hex): Hex[] => {
+export const finishHexes = (lastTile: Set<HexKey>, lastCenter: Hex, finishCenter: Hex): Hex[] => {
   const a = toPixel(lastCenter);
   const b = toPixel(finishCenter);
   const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };

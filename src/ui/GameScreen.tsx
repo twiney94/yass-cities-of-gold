@@ -20,6 +20,7 @@ const HOP_TIME = 200;
 export function GameScreen() {
   const game = useGame((s) => s.game)!;
   const seats = useGame((s) => s.seats);
+  const map = useGame((s) => s.map)!;
   const viewer = useGame((s) => s.viewer);
   const selection = useGame((s) => s.selection);
   const handoff = useGame((s) => s.handoff);
@@ -88,7 +89,7 @@ export function GameScreen() {
 
   return (
     <div className="game">
-      <PlayersBar game={game} seats={seats} onQuit={quit} />
+      <PlayersBar game={game} seats={seats} mapName={map.name} onQuit={quit} />
       <main className="game__main">
         <BoardView
           game={game}
@@ -119,7 +120,7 @@ export function GameScreen() {
       <div className="fx-layer" ref={fxLayer} />
       {covered && game.status.kind !== 'over' && <PassScreen player={game.turn.player} onReveal={() => animated(reveal)} />}
       {game.status.kind === 'over' && (
-        <GameOver game={game} onNewGame={() => newGame(seats)} onQuit={quit} />
+        <GameOver game={game} onNewGame={() => newGame(seats, map)} onQuit={quit} />
       )}
       {error && <Toast message={error} onDone={clearError} />}
     </div>

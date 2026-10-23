@@ -39,7 +39,7 @@ const SOON_STEPS = 4;
 const TRANSMITTER_MIN_VALUE = 2.5;
 const MIN_DECK_SIZE = 6;
 
-const requirementEffort = (terrain: Terrain): number => {
+export const requirementEffort = (terrain: Terrain): number => {
   switch (terrain.kind) {
     case 'landscape':
       return terrain.power * SUIT_EFFORT[terrain.suit];

@@ -1,12 +1,11 @@
 import { create } from 'zustand';
-import { STANDIN_BLOCKADES, STANDIN_ROUTE } from '../content/standin';
 import type { Action, GameEvent } from '../engine/actions';
-import { buildBoard } from '../engine/route';
 import { applyActions } from '../engine/rules';
 import { createGame } from '../engine/setup';
 import type { CardId, GameState, PieceId } from '../engine/state';
 import type { Selection } from './intents';
 import { describeEvents } from './labels';
+import type { GameMap } from './maps';
 
 export type Seat = 'human' | 'bot';
 export type LogLine = { id: number; text: string };
@@ -17,6 +16,7 @@ export type Animation = { id: number; events: GameEvent[] };
 // looking, straight away otherwise (a bot, or the only human at the table).
 type GameStore = {
   game: GameState | null;
+  map: GameMap | null;
   seats: Seat[];
   viewer: number;
   selection: Selection;
@@ -26,7 +26,7 @@ type GameStore = {
   focusCue: number;
   log: LogLine[];
   error: string | null;
-  newGame: (seats: Seat[]) => void;
+  newGame: (seats: Seat[], map: GameMap) => void;
   quit: () => void;
   toggleCard: (id: CardId) => void;
   choosePiece: (id: PieceId) => void;
@@ -47,6 +47,7 @@ const needsPassScreen = (seats: Seat[], player: number) =>
 
 export const useGame = create<GameStore>((set, get) => ({
   game: null,
+  map: null,
   seats: [],
   viewer: 0,
   selection: NO_SELECTION,
@@ -57,12 +58,12 @@ export const useGame = create<GameStore>((set, get) => ({
   log: [],
   error: null,
 
-  newGame: (seats) => {
+  newGame: (seats, map) => {
     const seed = Math.floor(Math.random() * 2 ** 32);
-    const board = buildBoard(STANDIN_ROUTE, STANDIN_BLOCKADES, seed);
     const covered = needsPassScreen(seats, 0);
     set({
-      game: createGame({ board, playerCount: seats.length as 2 | 3 | 4, seed }),
+      game: createGame({ board: map.board, playerCount: seats.length as 2 | 3 | 4, seed }),
+      map,
       seats,
       viewer: 0,
       selection: NO_SELECTION,
@@ -70,7 +71,7 @@ export const useGame = create<GameStore>((set, get) => ({
       covered,
       animation: animation([]),
       focusCue: covered ? 0 : 1,
-      log: lines([`New game on ${STANDIN_ROUTE.name} (seed ${seed})`]),
+      log: lines([`New game on ${map.name}${map.summary ? ` (${map.summary})` : ''}`]),
       error: null,
     });
   },

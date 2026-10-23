@@ -12,10 +12,13 @@ const cardCount = (game: GameState, player: number) => {
   return p.drawPile.length + p.hand.length + p.played.length + p.discard.length;
 };
 
-export function PlayersBar({ game, seats, onQuit }: { game: GameState; seats: Seat[]; onQuit: () => void }) {
+type PlayersBarProps = { game: GameState; seats: Seat[]; mapName: string; onQuit: () => void };
+
+export function PlayersBar({ game, seats, mapName, onQuit }: PlayersBarProps) {
   return (
     <header className="players">
       <span className="players__title">El Dorado</span>
+      <span className="players__map muted">{mapName}</span>
       {game.players.map((player, i) => (
         <div key={PLAYERS[i]!.name} className={cx('player', i === game.turn.player && 'is-current')}>
           <span className="dot" style={{ background: PLAYERS[i]!.color }} />

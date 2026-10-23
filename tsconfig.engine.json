@@ -22,5 +22,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/engine", "src/bot"]
+  "include": ["src/engine", "src/bot", "src/gen"]
 }
