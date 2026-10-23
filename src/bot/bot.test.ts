@@ -7,7 +7,7 @@ import { createGame } from '../engine/setup';
 import type { GameState } from '../engine/state';
 import { at, trackBoard } from '../engine/testing/boards';
 import { newGame, placePiece, run, setDiscard, setDrawPile, setHand, types } from '../engine/testing/fixtures';
-import { botStep, effortToFinish } from './bot';
+import { type BotLevel, botStep, effortToFinish } from './bot';
 
 const game = (track: string, blockades: Blockade[] = []) => {
   const state = newGame(trackBoard(track, blockades));
@@ -48,7 +48,7 @@ describe('botStep', () => {
     expect(botStep(state)).toEqual([{ type: 'playAction', cardId: cartographer!.id }]);
   });
 
-  it('chains its cards to reach El Dorado when it can', () => {
+  it('chains its cards to reach the City of Gold when it can', () => {
     const state = game('G1 G1 G1 G1 FG1');
     setHand(state, 0, 'scout', 'scout', 'traveler');
 
@@ -81,15 +81,43 @@ describe('botStep', () => {
   });
 });
 
-describe('bot-only games on the stand-in route', () => {
-  const games = ([2, 3, 4] as const).flatMap((players) => [1, 2, 3, 4].map((seed) => ({ players, seed })));
+describe('easy level', () => {
+  it('never thins its deck when a card lets it', () => {
+    const state = game('G1 G1 FG1');
+    setHand(state, 0, 'scientist', 'explorer', 'traveler');
+    setDrawPile(state, 0, 'scout');
+    setDiscard(state, 0, 'traveler', 'traveler', 'explorer', 'sailor', 'captain');
 
-  it.each(games)('$players players, seed $seed: legal moves only, finished in reasonable time', ({ players, seed }) => {
+    const drawn = run(state, ...botStep(state, 'easy')).state;
+
+    expect(botStep(drawn, 'easy')).toEqual([{ type: 'removeFromHand', cardIds: [] }]);
+  });
+
+  it('keeps no cards from one turn to the next', () => {
+    const state = game('G1 M');
+    const hand = setHand(state, 0, 'captain', 'pioneer');
+
+    expect(botStep(state, 'easy')).toEqual([{ type: 'endTurn', discard: hand.map((card) => card.id) }]);
+  });
+
+  it('makes the same choice every time from the same position', () => {
+    const state = createGame({ board: buildBoard(STANDIN_ROUTE, STANDIN_BLOCKADES, 3), playerCount: 3, seed: 3 });
+
+    expect(botStep(state, 'easy')).toEqual(botStep(state, 'easy'));
+  });
+});
+
+describe('bot-only games on the stand-in route', () => {
+  const games = (['easy', 'normal', 'strong'] as const).flatMap((level) =>
+    ([2, 3, 4] as const).flatMap((players) => (level === 'normal' ? [1, 2, 3, 4] : [1, 2]).map((seed) => ({ level, players, seed }))),
+  );
+
+  it.each(games)('$level, $players players, seed $seed: legal moves only, finished in reasonable time', ({ level, players, seed }) => {
     let state = createGame({ board: buildBoard(STANDIN_ROUTE, STANDIN_BLOCKADES, seed), playerCount: players, seed });
     let turns = 0;
     let steps = 0;
     while (state.status.kind !== 'over' && turns < 400) {
-      const actions = botStep(state);
+      const actions = botStep(state, level as BotLevel);
       const result = applyActions(state, actions);
       if (!result.ok) throw new Error(`${result.error}: ${JSON.stringify(actions)}`);
       state = result.state;
