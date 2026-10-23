@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Third-party source art (KayKit, CC0); only the rendered card figures ship
+art-src/

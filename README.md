@@ -19,6 +19,7 @@ npm run dev
 | `npm test` | Run the test suite |
 | `npm run typecheck` | Type-check the app, the engine and the tooling |
 | `npm run build` | Build for production into `dist/` |
+| `npm run render:figures` | Re-render the card characters (see below) |
 
 ## Layout
 
@@ -26,3 +27,14 @@ npm run dev
 - `src/bot`: computer opponents.
 - `src/gen`: the map generator (runs in a Web Worker).
 - `src/ui`: React interface, PixiJS board and card art; `src/ui/i18n` holds the English and French text.
+
+## Card characters
+
+The characters on the cards are rendered from [KayKit Adventurers](https://kaylousberg.itch.io/kaykit-adventurers) by Kay Lousberg (CC0). Only the rendered pictures in `src/ui/art/figures` ship with the game.
+
+To change a pose or prop, put the pack's `Characters/gltf` and `Assets/gltf` folders in `art-src/kaykit/` (from [the creator's GitHub](https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0), under `addons/kaykit_character_pack_adventures/`), edit `tools/figures/figures.ts`, run `npm run render:figures` and open the page it serves; it saves every render. `cards.html` on the same server shows all the cards at double size.
+
+## Credits
+
+- Characters: [KayKit Adventurers](https://kaylousberg.itch.io/kaykit-adventurers) by Kay Lousberg, [kaylousberg.com](https://www.kaylousberg.com) (CC0).
+- Fonts: Cinzel and Cinzel Decorative (SIL Open Font License).

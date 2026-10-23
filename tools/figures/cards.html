@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Card gallery</title>
+    <style>
+      body {
+        margin: 0;
+        background: #16261b;
+      }
+
+      .gallery {
+        --card-w: 224px;
+        --card-h: 312px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+        padding: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./cards.tsx"></script>
+  </body>
+</html>

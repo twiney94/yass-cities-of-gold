@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Card figures</title>
+    <style>
+      body {
+        margin: 0;
+        background: #2b3a2f;
+        color: #eee;
+        font: 13px system-ui, sans-serif;
+      }
+
+      #status {
+        padding: 10px 12px;
+      }
+
+      #grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 0 12px 12px;
+      }
+
+      figure {
+        margin: 0;
+        background: repeating-conic-gradient(#c9d3c0 0 25%, #e3eadc 0 50%) 0 0 / 16px 16px;
+      }
+
+      figure img {
+        display: block;
+        width: 180px;
+        height: 180px;
+      }
+
+      figcaption {
+        padding: 4px 6px;
+        background: #1b2c23;
+      }
+    </style>
+  </head>
+  <body>
+    <p id="status">Rendering…</p>
+    <div id="grid"></div>
+    <script type="module" src="./render.ts"></script>
+  </body>
+</html>
