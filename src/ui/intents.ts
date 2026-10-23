@@ -1,6 +1,6 @@
 import type { Action, Target } from '../engine/actions';
 import { ALL_CARDS, CARDS, type CardType, coinValue } from '../engine/cards';
-import { type TargetKey, adjacentTargets, routePlans, targetKey } from '../engine/moves';
+import { type TargetKey, adjacentTargets, planActions, routePlans, targetKey } from '../engine/moves';
 import { applyAction, applyActions } from '../engine/rules';
 import type { Card, CardId, GameState, PieceId } from '../engine/state';
 
@@ -55,15 +55,7 @@ export const computeIntents = (game: GameState, selection: Selection): Intents =
   if (piece !== null && turn.stage === 'moving') {
     const movement = turn.movement?.pieceId === piece ? turn.movement : null;
     const leftover = movement && { suit: movement.suit, remaining: movement.remaining };
-    for (const plan of routePlans(game, piece, cards, leftover).values()) {
-      offer(
-        plan.target,
-        plan.segments.flatMap((segment): Action[] => [
-          ...(segment.card ? [{ type: 'playForMovement' as const, cardId: segment.card.id, pieceId: piece, suit: segment.suit }] : []),
-          ...segment.path.map((target) => ({ type: 'step' as const, target })),
-        ]),
-      );
-    }
+    for (const plan of routePlans(game, piece, cards, leftover).values()) offer(plan.target, planActions(plan, piece));
   }
 
   const [only] = cards;

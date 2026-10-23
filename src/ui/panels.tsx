@@ -5,14 +5,14 @@ import type { GameState } from '../engine/state';
 import { cx } from './cx';
 import type { Intents } from './intents';
 import { PLAYERS, SUIT_ICON, cardName } from './labels';
-import type { LogLine } from './store';
+import type { LogLine, Seat } from './store';
 
 const cardCount = (game: GameState, player: number) => {
   const p = game.players[player]!;
   return p.drawPile.length + p.hand.length + p.played.length + p.discard.length;
 };
 
-export function PlayersBar({ game, onQuit }: { game: GameState; onQuit: () => void }) {
+export function PlayersBar({ game, seats, onQuit }: { game: GameState; seats: Seat[]; onQuit: () => void }) {
   return (
     <header className="players">
       <span className="players__title">El Dorado</span>
@@ -20,6 +20,7 @@ export function PlayersBar({ game, onQuit }: { game: GameState; onQuit: () => vo
         <div key={PLAYERS[i]!.name} className={cx('player', i === game.turn.player && 'is-current')}>
           <span className="dot" style={{ background: PLAYERS[i]!.color }} />
           <strong>{PLAYERS[i]!.name}</strong>
+          {seats[i] === 'bot' && <span className="tag">bot</span>}
           <span className="player__stat">{cardCount(game, i)} cards</span>
           {player.blockades.length > 0 && <span className="player__stat">blockades {player.blockades.join(', ')}</span>}
           {player.finishedOrder !== null && <span className="tag tag--gold">in El Dorado</span>}
@@ -37,17 +38,18 @@ type ActionBarProps = {
   game: GameState;
   intents: Intents;
   selectedCount: number;
-  locked: boolean;
+  waiting: string | null;
   onPerform: (actions: Action[]) => void;
 };
 
-export function ActionBar({ game, intents, selectedCount, locked, onPerform }: ActionBarProps) {
+export function ActionBar({ game, intents, selectedCount, waiting, onPerform }: ActionBarProps) {
+  const locked = waiting !== null;
   const { turn } = game;
   const { play } = intents;
   const player = PLAYERS[turn.player]!;
   const ownPieces = game.pieces.filter((p) => p.owner === turn.player && p.at !== 'eldorado').length;
   const hint = (() => {
-    if (locked) return 'Turn over…';
+    if (waiting) return waiting;
     if (turn.pending) return `Choose up to ${turn.pending.max} card(s) in your hand to remove from the game.`;
     if (turn.movement && turn.movement.remaining > 0 && selectedCount === 0)
       return `${cardName(turn.movement.card.type)}: ${turn.movement.remaining} ${SUIT_ICON[turn.movement.suit]} left. Click a highlighted space to keep going.`;

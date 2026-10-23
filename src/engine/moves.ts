@@ -1,4 +1,4 @@
-import type { Target } from './actions';
+import type { Action, Target } from './actions';
 import { type BlockadeId, type Terrain, adjacentSpaces, blockadeBetween, touchesBlockade } from './board';
 import { CARDS, type Suit } from './cards';
 import { type HexKey, hexKey } from './hex';
@@ -154,3 +154,9 @@ export const routePlans = (
   }
   return plans;
 };
+
+export const planActions = (plan: RoutePlan, pieceId: PieceId): Action[] =>
+  plan.segments.flatMap((segment): Action[] => [
+    ...(segment.card ? [{ type: 'playForMovement' as const, cardId: segment.card.id, pieceId, suit: segment.suit }] : []),
+    ...segment.path.map((target) => ({ type: 'step' as const, target })),
+  ]);

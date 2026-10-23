@@ -20,11 +20,12 @@ type RowProps = {
   size: CardSize;
   maxStep: number;
   fan?: boolean;
+  faceDown?: boolean;
   selected?: CardId[];
   onToggle?: (id: CardId) => void;
 };
 
-function CardRow({ cards, size, maxStep, fan, selected, onToggle }: RowProps) {
+function CardRow({ cards, size, maxStep, fan, faceDown, selected, onToggle }: RowProps) {
   const ref = useRef<HTMLDivElement>(null);
   const width = useWidth(ref);
   const cardWidth = CARD_WIDTH[size];
@@ -43,7 +44,7 @@ function CardRow({ cards, size, maxStep, fan, selected, onToggle }: RowProps) {
           <CardView
             key={card.id}
             id={card.id}
-            type={card.type}
+            type={faceDown ? undefined : card.type}
             size={size}
             style={style}
             selected={selected?.includes(card.id)}
@@ -65,9 +66,9 @@ function DrawPile({ cards }: { cards: Card[] }) {
   );
 }
 
-type DockProps = { player: PlayerState; selected: CardId[]; onToggle?: (id: CardId) => void };
+type DockProps = { player: PlayerState; handHidden: boolean; selected: CardId[]; onToggle?: (id: CardId) => void };
 
-export function Dock({ player, selected, onToggle }: DockProps) {
+export function Dock({ player, handHidden, selected, onToggle }: DockProps) {
   return (
     <section className="dock">
       <div className="zone zone--draw">
@@ -75,7 +76,7 @@ export function Dock({ player, selected, onToggle }: DockProps) {
         <DrawPile cards={player.drawPile} />
       </div>
       <div className="zone zone--hand">
-        <CardRow cards={player.hand} size="large" maxStep={80} fan selected={selected} onToggle={onToggle} />
+        <CardRow cards={player.hand} size="large" maxStep={80} fan faceDown={handHidden} selected={selected} onToggle={onToggle} />
       </div>
       <div className="zone zone--played">
         <span className="zone__label">Played this turn</span>

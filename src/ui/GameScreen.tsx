@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import type { Action } from '../engine/actions';
+import { botStep } from '../bot/bot';
 import type { BlockadeId } from '../engine/board';
 import type { HexKey } from '../engine/hex';
 import { BoardView } from './board/BoardView';
@@ -7,13 +8,18 @@ import { Dock } from './dock';
 import { type CardSnapshot, animateCards, snapshotCards } from './fx/cardMotion';
 import { NO_INTENTS, activePiece, coinsOf, computeIntents, selectedCards } from './intents';
 import { Market } from './market';
+import { PLAYERS } from './labels';
 import { ActionBar, EventLog, GameOver, PassScreen, PlayersBar, Toast } from './panels';
 import { useGame } from './store';
 
 const HANDOFF_DELAY = 1500;
+const BOT_PAUSE = 650;
+const BOT_FIRST_PAUSE = 1200;
+const HOP_TIME = 200;
 
 export function GameScreen() {
   const game = useGame((s) => s.game)!;
+  const seats = useGame((s) => s.seats);
   const viewer = useGame((s) => s.viewer);
   const selection = useGame((s) => s.selection);
   const handoff = useGame((s) => s.handoff);
@@ -24,7 +30,9 @@ export function GameScreen() {
   const error = useGame((s) => s.error);
   const { newGame, quit, toggleCard, choosePiece, perform, finishHandoff, reveal, clearError } = useGame.getState();
 
-  const interactive = !handoff && !covered && viewer === game.turn.player && game.status.kind !== 'over';
+  const onScreen = !handoff && !covered && viewer === game.turn.player && game.status.kind !== 'over';
+  const interactive = onScreen && seats[game.turn.player] === 'human';
+  const botTurn = onScreen && seats[game.turn.player] === 'bot';
   const intents = useMemo(() => (interactive ? computeIntents(game, selection) : NO_INTENTS), [interactive, game, selection]);
   const targets = useMemo(() => new Set(intents.board.keys()), [intents]);
   const piece = interactive ? activePiece(game, selection) : null;
@@ -45,9 +53,19 @@ export function GameScreen() {
 
   useEffect(() => {
     if (!handoff) return;
-    const timer = window.setTimeout(finishHandoff, HANDOFF_DELAY);
+    const timer = window.setTimeout(() => animated(finishHandoff), HANDOFF_DELAY);
     return () => window.clearTimeout(timer);
-  }, [handoff, finishHandoff]);
+  }, [handoff, finishHandoff, animated]);
+
+  useEffect(() => {
+    if (!botTurn) return;
+    const hops = animation.events.filter((event) => event.type === 'pieceMoved').length;
+    const delay = (animation.events.length === 0 ? BOT_FIRST_PAUSE : BOT_PAUSE) + hops * HOP_TIME;
+    const timer = window.setTimeout(() => act(botStep(game)), delay);
+    return () => window.clearTimeout(timer);
+  }, [botTurn, game, animation, act]);
+
+  const waiting = botTurn ? `${PLAYERS[game.turn.player]!.name} (bot) is playing…` : interactive ? null : 'Turn over…';
 
   const onSpace = useCallback(
     (key: HexKey) => {
@@ -70,7 +88,7 @@ export function GameScreen() {
 
   return (
     <div className="game">
-      <PlayersBar game={game} onQuit={quit} />
+      <PlayersBar game={game} seats={seats} onQuit={quit} />
       <main className="game__main">
         <BoardView
           game={game}
@@ -87,16 +105,21 @@ export function GameScreen() {
           <EventLog log={log} />
         </aside>
       </main>
-      <ActionBar game={game} intents={intents} selectedCount={selection.cards.length} locked={!interactive} onPerform={act} />
+      <ActionBar game={game} intents={intents} selectedCount={selection.cards.length} waiting={waiting} onPerform={act} />
       {covered ? (
         <section className="dock dock--hidden" />
       ) : (
-        <Dock player={game.players[viewer]!} selected={selection.cards} onToggle={interactive ? toggleCard : undefined} />
+        <Dock
+          player={game.players[viewer]!}
+          handHidden={seats[viewer] === 'bot'}
+          selected={selection.cards}
+          onToggle={interactive ? toggleCard : undefined}
+        />
       )}
       <div className="fx-layer" ref={fxLayer} />
       {covered && game.status.kind !== 'over' && <PassScreen player={game.turn.player} onReveal={() => animated(reveal)} />}
       {game.status.kind === 'over' && (
-        <GameOver game={game} onNewGame={() => newGame(game.players.length as 2 | 3 | 4)} onQuit={quit} />
+        <GameOver game={game} onNewGame={() => newGame(seats)} onQuit={quit} />
       )}
       {error && <Toast message={error} onDone={clearError} />}
     </div>

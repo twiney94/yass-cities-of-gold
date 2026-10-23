@@ -749,3 +749,33 @@ p {
     display: none;
   }
 }
+
+.seats {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.seat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 260px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.seat__kinds {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.btn--small {
+  padding: 4px 10px;
+  font-size: 13px;
+}

@@ -8,13 +8,16 @@ import type { CardId, GameState, PieceId } from '../engine/state';
 import type { Selection } from './intents';
 import { describeEvents } from './labels';
 
+export type Seat = 'human' | 'bot';
 export type LogLine = { id: number; text: string };
 export type Animation = { id: number; events: GameEvent[] };
 
-// After a turn ends, the hand on screen stays the previous player's (handoff) while their clean-up
-// animates; then the pass screen covers it, and revealing switches the viewer to the new player.
+// After a turn ends, the cards on screen stay the previous player's (handoff) while their clean-up
+// animates. Then the next player takes the screen: behind a pass screen when another human may be
+// looking, straight away otherwise (a bot, or the only human at the table).
 type GameStore = {
   game: GameState | null;
+  seats: Seat[];
   viewer: number;
   selection: Selection;
   handoff: boolean;
@@ -23,7 +26,7 @@ type GameStore = {
   focusCue: number;
   log: LogLine[];
   error: string | null;
-  newGame: (playerCount: 2 | 3 | 4) => void;
+  newGame: (seats: Seat[]) => void;
   quit: () => void;
   toggleCard: (id: CardId) => void;
   choosePiece: (id: PieceId) => void;
@@ -39,9 +42,12 @@ let nextId = 0;
 
 const lines = (texts: string[]): LogLine[] => texts.map((text) => ({ id: nextId++, text }));
 const animation = (events: GameEvent[]): Animation => ({ id: nextId++, events });
+const needsPassScreen = (seats: Seat[], player: number) =>
+  seats[player] === 'human' && seats.filter((seat) => seat === 'human').length > 1;
 
 export const useGame = create<GameStore>((set, get) => ({
   game: null,
+  seats: [],
   viewer: 0,
   selection: NO_SELECTION,
   handoff: false,
@@ -51,17 +57,19 @@ export const useGame = create<GameStore>((set, get) => ({
   log: [],
   error: null,
 
-  newGame: (playerCount) => {
+  newGame: (seats) => {
     const seed = Math.floor(Math.random() * 2 ** 32);
     const board = buildBoard(STANDIN_ROUTE, STANDIN_BLOCKADES, seed);
+    const covered = needsPassScreen(seats, 0);
     set({
-      game: createGame({ board, playerCount, seed }),
+      game: createGame({ board, playerCount: seats.length as 2 | 3 | 4, seed }),
+      seats,
       viewer: 0,
       selection: NO_SELECTION,
       handoff: false,
-      covered: true,
+      covered,
       animation: animation([]),
-      focusCue: 0,
+      focusCue: covered ? 0 : 1,
       log: lines([`New game on ${STANDIN_ROUTE.name} (seed ${seed})`]),
       error: null,
     });
@@ -98,11 +106,24 @@ export const useGame = create<GameStore>((set, get) => ({
     });
   },
 
-  finishHandoff: () => set({ handoff: false, covered: true }),
+  finishHandoff: () => {
+    const { game, seats } = get();
+    if (!game) return;
+    if (needsPassScreen(seats, game.turn.player)) set({ handoff: false, covered: true });
+    else get().reveal();
+  },
 
   reveal: () => {
     const { game } = get();
-    if (game) set(({ focusCue }) => ({ covered: false, viewer: game.turn.player, animation: animation([]), focusCue: focusCue + 1 }));
+    if (game) {
+      set(({ focusCue }) => ({
+        handoff: false,
+        covered: false,
+        viewer: game.turn.player,
+        animation: animation([]),
+        focusCue: focusCue + 1,
+      }));
+    }
   },
 
   clearError: () => set({ error: null }),
