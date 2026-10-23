@@ -3,6 +3,7 @@ import type { BotLevel } from '../bot/bot';
 import { type Difficulty, mapCode } from '../gen/code';
 import { LanguageSwitch } from './LanguageSwitch';
 import { Logo } from './Logo';
+import { PAWN_BAND, PAWN_PATH, PAWN_VIEWBOX } from './art/pawn';
 import { type Option, Segmented } from './Segmented';
 import { cx } from './cx';
 import { type Messages, useMessages } from './i18n';
@@ -38,9 +39,9 @@ const openingSeats = (mode: Mode): Seat[] => {
 
 function Meeple() {
   return (
-    <svg className="meeple" viewBox="-16 -37 32 39" aria-hidden="true">
-      <path d="M-11 0H-3.5L0-8L3.5 0H11L7-13Q15-15 14-20Q12-24 5-22H-5Q-12-24-14-20Q-15-15-7-13Z" />
-      <circle cx="0" cy="-28.5" r="6.5" />
+    <svg className="meeple" viewBox={PAWN_VIEWBOX} aria-hidden="true">
+      <path d={PAWN_PATH} />
+      <path className="meeple__band" d={PAWN_BAND} />
     </svg>
   );
 }

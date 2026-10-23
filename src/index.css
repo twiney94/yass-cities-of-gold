@@ -226,6 +226,12 @@ h3 {
   stroke-width: 2;
 }
 
+.meeple .meeple__band {
+  fill: none;
+  stroke: rgb(0 0 0 / 35%);
+  stroke-width: 1.8;
+}
+
 .modes {
   display: grid;
   gap: 12px;
@@ -275,12 +281,12 @@ h3 {
 }
 
 .mode__icon .meeple {
-  width: 22px;
+  width: 19px;
   fill: var(--gold);
 }
 
 .mode__icon--pair .meeple {
-  width: 19px;
+  width: 16px;
 }
 
 .mode__icon--pair .meeple + .meeple {
@@ -504,7 +510,7 @@ h3 {
 }
 
 .seat__color .meeple {
-  width: 24px;
+  width: 19px;
   fill: var(--seat);
   stroke: rgb(244 236 217 / 40%);
 }
@@ -626,11 +632,14 @@ h3 {
 
 .board__controls {
   position: absolute;
-  top: 12px;
+  top: 50%;
   right: 12px;
   z-index: 2;
   display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   gap: 6px;
+  transform: translateY(-50%);
 }
 
 .board__controls .btn {
@@ -831,7 +840,33 @@ h3 {
   color: var(--ink);
 }
 
-/* Tray: draw pile, hand, actions, played cards, discard pile */
+/* Turn actions float at the top centre of the board */
+
+.turn-actions {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  left: calc(var(--hud-w) + 24px);
+  z-index: 6;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.turn-actions .btn {
+  pointer-events: auto;
+}
+
+.turn-actions .btn--chunky {
+  padding: 12px 24px;
+  font-size: 17px;
+  box-shadow:
+    0 4px 0 rgb(0 0 0 / 45%),
+    0 10px 24px rgb(0 0 0 / 40%);
+}
+
+/* Tray: draw pile, hand, played cards, discard pile */
 
 .tray {
   position: absolute;
@@ -840,7 +875,7 @@ h3 {
   left: calc(var(--hud-w) + 36px);
   z-index: 4;
   display: grid;
-  grid-template-columns: 92px minmax(0, 1fr) 168px 150px 120px;
+  grid-template-columns: 92px minmax(0, 1fr) 150px 120px;
   align-items: end;
   gap: 14px;
   pointer-events: none;
@@ -870,18 +905,6 @@ h3 {
 .zone--played,
 .zone--discard {
   justify-items: stretch;
-}
-
-.zone--actions {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
-  padding-bottom: 6px;
-}
-
-.zone--actions .btn {
-  white-space: normal;
 }
 
 .zone__label {
@@ -1510,7 +1533,8 @@ h3 {
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas:
       'logo players controls'
-      'turn turn turn';
+      'turn turn turn'
+      'actions actions actions';
     align-items: center;
     gap: 6px 10px;
     width: auto;
@@ -1623,36 +1647,35 @@ h3 {
     align-self: flex-end;
   }
 
-  .board__controls {
-    top: 50%;
-    flex-direction: column;
-    transform: translateY(-50%);
-  }
-
   .tray {
     right: 8px;
     bottom: 6px;
     left: 8px;
     grid-template-columns: 92px minmax(0, 1fr);
-    grid-template-areas:
-      'actions actions'
-      'draw hand';
-    gap: 8px 10px;
+    gap: 10px;
   }
 
-  .zone--draw {
-    grid-area: draw;
-  }
-
-  .zone--hand {
-    grid-area: hand;
-  }
-
-  .zone--actions {
+  .turn-actions {
+    position: static;
     grid-area: actions;
-    flex-direction: row;
-    justify-content: flex-end;
-    padding: 0;
+    gap: 6px;
+    pointer-events: auto;
+  }
+
+  .turn-actions .btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: normal;
+  }
+
+  .turn-actions .btn--market {
+    flex: none;
+  }
+
+  .turn-actions .btn--chunky {
+    padding: 8px 10px;
+    font-size: 13px;
+    box-shadow: 0 4px 0 rgb(0 0 0 / 45%);
   }
 
   .zone--played,
@@ -1671,7 +1694,8 @@ h3 {
     grid-template-areas:
       'logo controls'
       'players players'
-      'turn turn';
+      'turn turn'
+      'actions actions';
   }
 
   .logo--small .logo__title {
@@ -1703,11 +1727,6 @@ h3 {
 
   .zone--hand {
     padding: 20px 8px 6px;
-  }
-
-  .zone--actions .btn--chunky {
-    padding: 8px 12px;
-    font-size: 14px;
   }
 
   .row--large {

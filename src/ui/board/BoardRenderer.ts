@@ -1,11 +1,12 @@
 import { gsap } from 'gsap';
-import { type Application, Container, Graphics, Text } from 'pixi.js';
+import { type Application, Container, Graphics, GraphicsPath, Text } from 'pixi.js';
 import type { GameEvent } from '../../engine/actions';
 import { type BlockadeId, type Board, type Requirement, type Space, type Terrain, separates } from '../../engine/board';
 import type { Suit } from '../../engine/cards';
 import { DIRECTIONS, type Hex, type HexKey, addHex, hexDisk, hexDistance, hexKey } from '../../engine/hex';
 import type { TargetKey } from '../../engine/moves';
 import type { GameState, PieceId } from '../../engine/state';
+import { PAWN_BAND, PAWN_PATH } from '../art/pawn';
 
 type Point = { x: number; y: number };
 type Handlers = { onSpace: (key: HexKey) => void; onBlockade: (id: BlockadeId) => void };
@@ -214,39 +215,6 @@ const drawSeam = (g: Graphics, segments: Segment[], requirement: Requirement) =>
     }
   }
 };
-
-// The wooden explorer from the box, front face only: a fedora with a wide brim and a pinched crown, arms at
-// the sides, legs parted by an arch. Feet at (ox, oy).
-const tracePawn = (g: Graphics, ox: number, oy: number) =>
-  g
-    .moveTo(ox - 9, oy)
-    .lineTo(ox - 2.6, oy)
-    .lineTo(ox - 2.6, oy - 8)
-    .quadraticCurveTo(ox, oy - 10.5, ox + 2.6, oy - 8)
-    .lineTo(ox + 2.6, oy)
-    .lineTo(ox + 9, oy)
-    .lineTo(ox + 8.6, oy - 12)
-    .lineTo(ox + 9.6, oy - 13)
-    .lineTo(ox + 9.2, oy - 22)
-    .quadraticCurveTo(ox + 9, oy - 25.5, ox + 5, oy - 26)
-    .lineTo(ox + 3.6, oy - 26.5)
-    .quadraticCurveTo(ox + 5.4, oy - 28.4, ox + 4.8, oy - 31)
-    .lineTo(ox + 9.6, oy - 31.2)
-    .quadraticCurveTo(ox + 11.4, oy - 31.4, ox + 11, oy - 33.2)
-    .quadraticCurveTo(ox + 8, oy - 33, ox + 5.6, oy - 33.4)
-    .lineTo(ox + 4.8, oy - 38.4)
-    .quadraticCurveTo(ox + 2.6, oy - 40.2, ox, oy - 38.8)
-    .quadraticCurveTo(ox - 2.6, oy - 40.2, ox - 4.8, oy - 38.4)
-    .lineTo(ox - 5.6, oy - 33.4)
-    .quadraticCurveTo(ox - 8, oy - 33, ox - 11, oy - 33.2)
-    .quadraticCurveTo(ox - 11.4, oy - 31.4, ox - 9.6, oy - 31.2)
-    .lineTo(ox - 4.8, oy - 31)
-    .quadraticCurveTo(ox - 5.4, oy - 28.4, ox - 3.6, oy - 26.5)
-    .lineTo(ox - 5, oy - 26)
-    .quadraticCurveTo(ox - 9, oy - 25.5, ox - 9.2, oy - 22)
-    .lineTo(ox - 9.6, oy - 13)
-    .lineTo(ox - 8.6, oy - 12)
-    .closePath();
 
 // The golden city behind the finishing spaces: empty hexes near the river and away from the rest of the route.
 const cityHexes = (board: Board, spaces: Space[]): Hex[] => {
@@ -759,10 +727,9 @@ export class BoardRenderer {
     const body = new Container();
     const figure = new Container();
     const ring = new Graphics().ellipse(0, 0, 18, 8).stroke({ width: 3, color: COLORS.highlight });
-    const silhouette = tracePawn(new Graphics(), 0, 0).fill(color).stroke({ width: 2, color: COLORS.outline });
+    const silhouette = new Graphics().path(new GraphicsPath(PAWN_PATH)).fill(color).stroke({ width: 2, color: COLORS.outline });
     const shading = new Graphics()
-      .moveTo(-5.3, -34.7)
-      .lineTo(5.3, -34.7)
+      .path(new GraphicsPath(PAWN_BAND))
       .stroke({ width: 1.8, color: shade(color, 0.55) })
       .moveTo(-4.2, -38.1)
       .quadraticCurveTo(-2.6, -39.5, -0.9, -38.9)

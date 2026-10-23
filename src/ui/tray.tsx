@@ -1,4 +1,4 @@
-import { type CSSProperties, type ReactNode, type Ref, type RefObject, useLayoutEffect, useRef, useState } from 'react';
+import { type CSSProperties, type Ref, type RefObject, useLayoutEffect, useRef, useState } from 'react';
 import type { Card, CardId, PlayerState } from '../engine/state';
 import { CardView } from './CardView';
 import { CARD_WIDTH, type CardSize } from './cardSizes';
@@ -78,10 +78,9 @@ type TrayProps = {
   handHidden: boolean;
   selected: CardId[];
   onToggle?: (id: CardId) => void;
-  actions: ReactNode;
 };
 
-export function Tray({ ref, player, handHidden, selected, onToggle, actions }: TrayProps) {
+export function Tray({ ref, player, handHidden, selected, onToggle }: TrayProps) {
   const m = useMessages();
   const owned = player.drawPile.length + player.hand.length + player.played.length + player.discard.length;
   return (
@@ -102,7 +101,6 @@ export function Tray({ ref, player, handHidden, selected, onToggle, actions }: T
           {m.game.hand} · {player.hand.length}
         </span>
       </div>
-      <div className="zone zone--actions">{actions}</div>
       <div className="zone zone--played">
         <span className="zone__label">{m.game.played}</span>
         <CardRow cards={player.played} size="small" maxStep={34} />

@@ -199,6 +199,16 @@ export function GameScreen() {
           choosePiece={choosingPiece}
           botPlayed={botPlayed}
         />
+        <div className="turn-actions">
+          <TurnActions
+            game={game}
+            intents={intents}
+            selectedCount={selectedCount}
+            locked={locked}
+            onPerform={act}
+            onMarket={() => setMarketOpen(true)}
+          />
+        </div>
         <PlayersPanel game={game} seats={seats} players={players} />
         {marketOpen && <div className="sheet-backdrop" onClick={() => setMarketOpen(false)} />}
         <div className={cx('hud__sheet', marketOpen && 'is-open')}>
@@ -216,16 +226,6 @@ export function GameScreen() {
           handHidden={seats[viewer]?.kind === 'bot'}
           selected={selection.cards}
           onToggle={interactive ? toggleCard : undefined}
-          actions={
-            <TurnActions
-              game={game}
-              intents={intents}
-              selectedCount={selectedCount}
-              locked={locked}
-              onPerform={act}
-              onMarket={() => setMarketOpen(true)}
-            />
-          }
         />
       )}
       <div className="fx-layer" ref={fxLayer} />
