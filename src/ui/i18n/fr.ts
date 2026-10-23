@@ -87,6 +87,13 @@ export const fr: Messages = {
     charting: 'Tracé de la piste…',
     chartingDetail: "Génération de la carte et parties d'essai des bots.",
   },
+  dice: {
+    title: 'Qui commence ?',
+    tie: 'Égalité ! Les ex æquo relancent.',
+    first: (name: string) => `${name} commence !`,
+    rank: (place: number) => (place === 1 ? '1er' : `${place}e`),
+    go: "C'est parti !",
+  },
   game: {
     quit: 'Quitter',
     botTag: (level: BotLevel) => `Bot ${LEVEL[level].toLowerCase()}`,
@@ -117,6 +124,9 @@ export const fr: Messages = {
     keepAll: 'Tout garder',
     endTurn: 'Fin du tour',
     endTurnDiscard: (count: number) => `Fin du tour · défausser ${count}`,
+    notYourTurn: (name: string) => `Pas votre tour, ${name} joue`,
+    seeDiscard: 'Voir votre défausse',
+    discardTitle: (count: number) => `Défausse · ${plural(count, 'carte')}`,
     rejected: "Ce coup n'est pas autorisé.",
     passTitle: (name: string) => `Au tour de ${name}`,
     passBody: (name: string) => `Passez l'appareil à ${name}. Les autres, ne regardez pas sa main.`,

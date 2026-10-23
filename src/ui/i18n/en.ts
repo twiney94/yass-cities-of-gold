@@ -87,6 +87,13 @@ export const en = {
     charting: 'Charting the trail…',
     chartingDetail: 'Generating the map and letting bots playtest it.',
   },
+  dice: {
+    title: 'Who goes first?',
+    tie: 'A tie! The tied players roll again.',
+    first: (name: string) => `${name} goes first!`,
+    rank: (place: number) => ['1st', '2nd', '3rd', '4th'][place - 1] ?? `${place}th`,
+    go: "Let's go!",
+  },
   game: {
     quit: 'Quit',
     botTag: (level: BotLevel) => `${LEVEL[level]} bot`,
@@ -117,6 +124,9 @@ export const en = {
     keepAll: 'Keep them all',
     endTurn: 'End turn',
     endTurnDiscard: (count: number) => `End turn · discard ${count}`,
+    notYourTurn: (name: string) => `Not your turn, ${name} is playing`,
+    seeDiscard: 'See your discard pile',
+    discardTitle: (count: number) => `Discard pile · ${plural(count, 'card')}`,
     rejected: 'That move is not allowed.',
     passTitle: (name: string) => `${name}'s turn`,
     passBody: (name: string) => `Pass the device to ${name}. Everyone else, look away from the hand.`,

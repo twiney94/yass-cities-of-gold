@@ -4,6 +4,7 @@ import type { Action, GameEvent } from '../engine/actions';
 import { applyActions } from '../engine/rules';
 import { createGame } from '../engine/setup';
 import type { CardId, GameState, PieceId } from '../engine/state';
+import { type TurnOrderRoll, d6, rollTurnOrder } from './dice';
 import type { Selection } from './intents';
 import { type LogEntry, type PlayerColor, describeEvents } from './labels';
 import type { GameMap } from './maps';
@@ -11,12 +12,14 @@ import type { GameMap } from './maps';
 export type Seat = { color: PlayerColor } & ({ kind: 'human' } | { kind: 'bot'; level: BotLevel });
 export type LogLine = { id: number; entry: LogEntry };
 export type Animation = { id: number; events: GameEvent[] };
+export type PendingRoll = { seats: Seat[]; map: GameMap; result: TurnOrderRoll };
 
 // After a turn ends, the cards on screen stay the previous player's (handoff) while their clean-up
 // animates. Then the next human takes the screen: behind a pass screen when another human may be
 // looking, straight away otherwise. During a bot's turn the screen stays with the last human, so
 // they can plan with the hand they just drew.
 type GameStore = {
+  roll: PendingRoll | null;
   game: GameState | null;
   map: GameMap | null;
   seats: Seat[];
@@ -28,6 +31,8 @@ type GameStore = {
   focusCue: number;
   log: LogLine[];
   error: string | null;
+  prepare: (seats: Seat[], map: GameMap) => void;
+  begin: () => void;
   newGame: (seats: Seat[], map: GameMap) => void;
   quit: () => void;
   toggleCard: (id: CardId) => void;
@@ -56,6 +61,7 @@ const firstViewer = (seats: Seat[]) => {
 };
 
 export const useGame = create<GameStore>((set, get) => ({
+  roll: null,
   game: null,
   map: null,
   seats: [],
@@ -67,6 +73,18 @@ export const useGame = create<GameStore>((set, get) => ({
   focusCue: 0,
   log: [],
   error: null,
+
+  prepare: (seats, map) => set({ roll: { seats, map, result: rollTurnOrder(seats.length, d6) }, game: null }),
+
+  begin: () => {
+    const { roll } = get();
+    if (!roll) return;
+    set({ roll: null });
+    get().newGame(
+      roll.result.order.map((i) => roll.seats[i]!),
+      roll.map,
+    );
+  },
 
   newGame: (seats, map) => {
     const seed = Math.floor(Math.random() * 2 ** 32);

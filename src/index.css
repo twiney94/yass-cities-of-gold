@@ -840,30 +840,58 @@ h3 {
   color: var(--ink);
 }
 
-/* Turn actions float at the top centre of the board */
+/* Turn actions sit at the foot of the HUD, always in reach */
 
 .turn-actions {
-  position: fixed;
-  top: 12px;
-  right: 12px;
-  left: calc(var(--hud-w) + 24px);
-  z-index: 6;
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  pointer-events: none;
-}
-
-.turn-actions .btn {
-  pointer-events: auto;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: grid;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 8px;
+  background: linear-gradient(rgb(19 32 25 / 0%), #13201a 10px);
 }
 
 .turn-actions .btn--chunky {
-  padding: 12px 24px;
-  font-size: 17px;
-  box-shadow:
-    0 4px 0 rgb(0 0 0 / 45%),
-    0 10px 24px rgb(0 0 0 / 40%);
+  width: 100%;
+  padding: 12px 18px;
+  font-size: 16px;
+}
+
+.turn-actions__end {
+  display: grid;
+}
+
+.turn-actions__end .btn:disabled {
+  pointer-events: none;
+}
+
+.has-tip {
+  position: relative;
+}
+
+.has-tip::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  z-index: 3;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #0d1710;
+  color: var(--ink);
+  font: 600 12px / 1.3 system-ui, sans-serif;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%);
+  transition: opacity 0.15s ease;
+}
+
+.has-tip:hover::after {
+  opacity: 1;
 }
 
 /* Tray: draw pile, hand, played cards, discard pile */
@@ -875,7 +903,7 @@ h3 {
   left: calc(var(--hud-w) + 36px);
   z-index: 4;
   display: grid;
-  grid-template-columns: 92px minmax(0, 1fr) 150px 120px;
+  grid-template-columns: 92px minmax(0, 1fr) 92px;
   align-items: end;
   gap: 14px;
   pointer-events: none;
@@ -895,6 +923,7 @@ h3 {
 }
 
 .zone--hand {
+  position: relative;
   justify-items: stretch;
   padding: 26px 16px 8px;
   border-radius: 22px;
@@ -902,9 +931,58 @@ h3 {
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 7%);
 }
 
-.zone--played,
-.zone--discard {
-  justify-items: stretch;
+.played {
+  position: absolute;
+  right: 16px;
+  bottom: calc(100% + 8px);
+  left: 16px;
+}
+
+.played .row--small {
+  --card-w: 64px;
+  --card-h: 89px;
+}
+
+.stack:empty {
+  border: 2px dashed rgb(255 255 255 / 18%);
+  border-radius: 8px;
+}
+
+.stack-button {
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 0.15s ease;
+}
+
+.stack-button:hover:not(:disabled) {
+  transform: translateY(-3px);
+}
+
+.stack-button:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+
+.stack-button:disabled {
+  cursor: default;
+}
+
+.discard-dialog {
+  max-width: min(760px, 100%);
+}
+
+.discard-dialog__cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  max-height: 60vh;
+  padding: 4px;
+  overflow-y: auto;
 }
 
 .zone__label {
@@ -1004,7 +1082,7 @@ h3 {
   --tilt: 0deg;
 }
 
-.row--small > .card:hover {
+.row--small:not(.stack) > .card:hover {
   --raise: -40px;
   --zoom: 1.6;
 }
@@ -1462,6 +1540,82 @@ h3 {
   gap: 10px;
 }
 
+.dice {
+  gap: 16px;
+  width: min(400px, 100%);
+}
+
+.dice__rows {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dice__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto 3em;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel-raised);
+  text-align: left;
+}
+
+.dice__row.is-first {
+  border-color: var(--gold);
+  box-shadow: 0 0 14px rgb(242 193 78 / 35%);
+}
+
+.dice__faces {
+  display: flex;
+  gap: 6px;
+}
+
+.die {
+  width: 34px;
+  height: 34px;
+}
+
+.die rect {
+  fill: #fbf4e3;
+  stroke: #5c3d0b;
+  stroke-width: 2;
+}
+
+.die circle {
+  fill: #2a1f08;
+}
+
+.die.is-rolling {
+  animation: die-tumble 0.3s linear infinite;
+}
+
+@keyframes die-tumble {
+  50% {
+    transform: rotate(180deg) translateY(-3px);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.dice__rank {
+  font: 700 14px / 1 system-ui, sans-serif;
+  color: var(--gold);
+  text-align: right;
+}
+
+.dice__note {
+  min-height: 1.4em;
+  color: var(--muted);
+}
+
 .ranking {
   margin: 0;
   padding-left: 20px;
@@ -1507,8 +1661,7 @@ h3 {
 }
 
 .btn--market,
-.sheet-close,
-.zone__label--compact {
+.sheet-close {
   display: none;
 }
 
@@ -1651,41 +1804,43 @@ h3 {
     right: 8px;
     bottom: 6px;
     left: 8px;
-    grid-template-columns: 92px minmax(0, 1fr);
+    grid-template-columns: 92px minmax(0, 1fr) 92px;
     gap: 10px;
   }
 
   .turn-actions {
     position: static;
     grid-area: actions;
+    display: flex;
     gap: 6px;
-    pointer-events: auto;
+    margin: 0;
+    padding: 0;
+    background: none;
+  }
+
+  .turn-actions > * {
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   .turn-actions .btn {
-    flex: 1 1 auto;
-    min-width: 0;
     white-space: normal;
   }
 
-  .turn-actions .btn--market {
+  .turn-actions > .btn--market {
     flex: none;
   }
 
   .turn-actions .btn--chunky {
+    width: auto;
     padding: 8px 10px;
     font-size: 13px;
-    box-shadow: 0 4px 0 rgb(0 0 0 / 45%);
   }
 
-  .zone--played,
-  .zone--discard {
-    display: none;
+  .turn-actions__end .btn--chunky {
+    width: 100%;
   }
 
-  .zone__label--compact {
-    display: block;
-  }
 }
 
 @media (max-width: 640px) {
@@ -1722,7 +1877,19 @@ h3 {
   }
 
   .tray {
-    grid-template-columns: 64px minmax(0, 1fr);
+    grid-template-columns: 60px minmax(0, 1fr) 60px;
+    gap: 6px;
+  }
+
+  .zone--draw .zone__label,
+  .zone--discard .zone__label {
+    font-size: 9.5px;
+    letter-spacing: 0.03em;
+  }
+
+  .played .row--small {
+    --card-w: 50px;
+    --card-h: 70px;
   }
 
   .zone--hand {
@@ -1734,9 +1901,10 @@ h3 {
     --card-h: 120px;
   }
 
-  .zone--draw .row {
-    transform: scale(0.8);
-    transform-origin: left bottom;
+  .zone--draw .row,
+  .zone--discard .row {
+    transform: scale(0.7);
+    transform-origin: center bottom;
   }
 
   .maps {

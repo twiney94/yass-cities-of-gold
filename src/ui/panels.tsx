@@ -88,14 +88,17 @@ type TurnActionsProps = {
   intents: Intents;
   selectedCount: number;
   locked: boolean;
+  waitingFor: string | null;
   onPerform: (actions: Action[]) => void;
   onMarket: () => void;
 };
 
-export function TurnActions({ game, intents, selectedCount, locked, onPerform, onMarket }: TurnActionsProps) {
+export function TurnActions({ game, intents, selectedCount, locked, waitingFor, onPerform, onMarket }: TurnActionsProps) {
   const m = useMessages();
   const { turn } = game;
-  const { play, endTurn, removal } = intents;
+  const { play, removal } = intents;
+  const endTurn = locked ? null : intents.endTurn;
+  const tip = waitingFor ? m.game.notYourTurn(waitingFor) : undefined;
   return (
     <>
       <button type="button" className={cx('btn', 'btn--chunky', 'btn--market', intents.market.size > 0 && 'is-target')} onClick={onMarket}>
@@ -111,11 +114,11 @@ export function TurnActions({ game, intents, selectedCount, locked, onPerform, o
           {selectedCount > 0 ? m.game.remove(selectedCount) : m.game.keepAll}
         </button>
       )}
-      {!locked && endTurn && (
-        <button type="button" className="btn btn--chunky btn--primary" onClick={() => onPerform([endTurn])}>
-          {selectedCount > 0 ? m.game.endTurnDiscard(selectedCount) : m.game.endTurn}
+      <span className={cx('turn-actions__end', tip && 'has-tip')} data-tip={tip}>
+        <button type="button" className="btn btn--chunky btn--primary" disabled={!endTurn} onClick={() => endTurn && onPerform([endTurn])}>
+          {endTurn && selectedCount > 0 ? m.game.endTurnDiscard(selectedCount) : m.game.endTurn}
         </button>
-      )}
+      </span>
     </>
   );
 }

@@ -69,7 +69,7 @@ export function GameScreen() {
   const focusCue = useGame((s) => s.focusCue);
   const log = useGame((s) => s.log);
   const error = useGame((s) => s.error);
-  const { newGame, quit, toggleCard, choosePiece, perform, finishHandoff, reveal, clearError } = useGame.getState();
+  const { prepare, quit, toggleCard, choosePiece, perform, finishHandoff, reveal, clearError } = useGame.getState();
 
   const settled = !handoff && !covered && game.status.kind !== 'over';
   const seat = seats[game.turn.player]!;
@@ -199,16 +199,6 @@ export function GameScreen() {
           choosePiece={choosingPiece}
           botPlayed={botPlayed}
         />
-        <div className="turn-actions">
-          <TurnActions
-            game={game}
-            intents={intents}
-            selectedCount={selectedCount}
-            locked={locked}
-            onPerform={act}
-            onMarket={() => setMarketOpen(true)}
-          />
-        </div>
         <PlayersPanel game={game} seats={seats} players={players} />
         {marketOpen && <div className="sheet-backdrop" onClick={() => setMarketOpen(false)} />}
         <div className={cx('hud__sheet', marketOpen && 'is-open')}>
@@ -217,6 +207,17 @@ export function GameScreen() {
           </button>
           <Market game={game} intents={intents} coins={coinsOf(selectedCards(game, selection))} onPerform={buyFromMarket} />
           <EventLog lines={logLines} />
+        </div>
+        <div className="turn-actions">
+          <TurnActions
+            game={game}
+            intents={intents}
+            selectedCount={selectedCount}
+            locked={locked}
+            waitingFor={interactive || outOfCards ? null : turnPlayer.name}
+            onPerform={act}
+            onMarket={() => setMarketOpen(true)}
+          />
         </div>
       </aside>
       {!covered && (
@@ -230,7 +231,7 @@ export function GameScreen() {
       )}
       <div className="fx-layer" ref={fxLayer} />
       {covered && game.status.kind !== 'over' && <PassScreen player={turnPlayer} onReveal={() => animated(reveal)} />}
-      {game.status.kind === 'over' && <GameOver game={game} players={players} onNewGame={() => newGame(seats, map)} onQuit={quit} />}
+      {game.status.kind === 'over' && <GameOver game={game} players={players} onNewGame={() => prepare(seats, map)} onQuit={quit} />}
       {error && <Toast message={m.game.rejected} onDone={clearError} />}
     </div>
   );
