@@ -215,6 +215,39 @@ const drawSeam = (g: Graphics, segments: Segment[], requirement: Requirement) =>
   }
 };
 
+// The wooden explorer from the box, front face only: a fedora with a wide brim and a pinched crown, arms at
+// the sides, legs parted by an arch. Feet at (ox, oy).
+const tracePawn = (g: Graphics, ox: number, oy: number) =>
+  g
+    .moveTo(ox - 9, oy)
+    .lineTo(ox - 2.6, oy)
+    .lineTo(ox - 2.6, oy - 8)
+    .quadraticCurveTo(ox, oy - 10.5, ox + 2.6, oy - 8)
+    .lineTo(ox + 2.6, oy)
+    .lineTo(ox + 9, oy)
+    .lineTo(ox + 8.6, oy - 12)
+    .lineTo(ox + 9.6, oy - 13)
+    .lineTo(ox + 9.2, oy - 22)
+    .quadraticCurveTo(ox + 9, oy - 25.5, ox + 5, oy - 26)
+    .lineTo(ox + 3.6, oy - 26.5)
+    .quadraticCurveTo(ox + 5.4, oy - 28.4, ox + 4.8, oy - 31)
+    .lineTo(ox + 9.6, oy - 31.2)
+    .quadraticCurveTo(ox + 11.4, oy - 31.4, ox + 11, oy - 33.2)
+    .quadraticCurveTo(ox + 8, oy - 33, ox + 5.6, oy - 33.4)
+    .lineTo(ox + 4.8, oy - 38.4)
+    .quadraticCurveTo(ox + 2.6, oy - 40.2, ox, oy - 38.8)
+    .quadraticCurveTo(ox - 2.6, oy - 40.2, ox - 4.8, oy - 38.4)
+    .lineTo(ox - 5.6, oy - 33.4)
+    .quadraticCurveTo(ox - 8, oy - 33, ox - 11, oy - 33.2)
+    .quadraticCurveTo(ox - 11.4, oy - 31.4, ox - 9.6, oy - 31.2)
+    .lineTo(ox - 4.8, oy - 31)
+    .quadraticCurveTo(ox - 5.4, oy - 28.4, ox - 3.6, oy - 26.5)
+    .lineTo(ox - 5, oy - 26)
+    .quadraticCurveTo(ox - 9, oy - 25.5, ox - 9.2, oy - 22)
+    .lineTo(ox - 9.6, oy - 13)
+    .lineTo(ox - 8.6, oy - 12)
+    .closePath();
+
 // The golden city behind the finishing spaces: empty hexes near the river and away from the rest of the route.
 const cityHexes = (board: Board, spaces: Space[]): Hex[] => {
   const others = spaces.filter((space) => !space.finish);
@@ -726,29 +759,24 @@ export class BoardRenderer {
     const body = new Container();
     const figure = new Container();
     const ring = new Graphics().ellipse(0, 0, 18, 8).stroke({ width: 3, color: COLORS.highlight });
-    const silhouette = new Graphics()
-      .moveTo(-11, 0)
-      .lineTo(-3.5, 0)
-      .lineTo(0, -8)
-      .lineTo(3.5, 0)
-      .lineTo(11, 0)
-      .lineTo(7, -13)
-      .quadraticCurveTo(15, -15, 14, -20)
-      .quadraticCurveTo(12, -24, 5, -22)
-      .lineTo(-5, -22)
-      .quadraticCurveTo(-12, -24, -14, -20)
-      .quadraticCurveTo(-15, -15, -7, -13)
-      .closePath()
-      .fill(color)
-      .stroke({ width: 2, color: COLORS.outline })
-      .circle(0, -28.5, 6.5)
-      .fill(color)
-      .stroke({ width: 2, color: COLORS.outline });
+    const silhouette = tracePawn(new Graphics(), 0, 0).fill(color).stroke({ width: 2, color: COLORS.outline });
     const shading = new Graphics()
-      .poly([1, -1, 3.5, 0, 11, 0, 7, -13, 14, -20, 5, -22, 1, -22])
-      .fill({ color: 0x000000, alpha: 0.18 })
-      .circle(-2.5, -31, 2.2)
-      .fill({ color: 0xffffff, alpha: 0.55 });
+      .moveTo(-5.3, -34.7)
+      .lineTo(5.3, -34.7)
+      .stroke({ width: 1.8, color: shade(color, 0.55) })
+      .moveTo(-4.2, -38.1)
+      .quadraticCurveTo(-2.6, -39.5, -0.9, -38.9)
+      .moveTo(-10.2, -32.9)
+      .lineTo(-6.4, -33.1)
+      .stroke({ width: 1.2, color: 0xffffff, alpha: 0.4, cap: 'round' })
+      .moveTo(-8.4, -22.5)
+      .lineTo(-8.8, -14)
+      .stroke({ width: 1.4, color: 0xffffff, alpha: 0.28, cap: 'round' })
+      .moveTo(-2.5, -24)
+      .quadraticCurveTo(-1.2, -18, -2.2, -12)
+      .moveTo(3, -23)
+      .quadraticCurveTo(4.2, -17, 3.2, -12.5)
+      .stroke({ width: 0.8, color: shade(color, 0.78), alpha: 0.6 });
     figure.addChild(silhouette, shading);
     body.addChild(new Graphics().ellipse(0, 0, 12, 5).fill({ color: 0x000000, alpha: 0.35 }), ring, figure);
     const meeple: Meeple = { body, figure, ring, at: null };
