@@ -5,7 +5,6 @@ import { type BlockadeId, type Board, type Space, type Terrain, separates } from
 import { DIRECTIONS, type Hex, type HexKey, addHex, hexDisk, hexDistance, hexKey } from '../../engine/hex';
 import type { TargetKey } from '../../engine/moves';
 import type { GameState, PieceId } from '../../engine/state';
-import { PLAYERS } from '../labels';
 
 type Point = { x: number; y: number };
 type Handlers = { onSpace: (key: HexKey) => void; onBlockade: (id: BlockadeId) => void };
@@ -123,6 +122,7 @@ export class BoardRenderer {
   private readonly highlights = new Graphics();
   private readonly upright = new Container();
   private readonly pieces = new Map<PieceId, Meeple>();
+  private playerColors: readonly string[] = [];
   private readonly badges = new Map<BlockadeId, Badge>();
   private readonly fx = gsap.context(() => {});
   private readonly pulse = { alpha: 1 };
@@ -166,6 +166,13 @@ export class BoardRenderer {
     window.removeEventListener('pointermove', this.onPointerMove);
     window.removeEventListener('pointerup', this.onPointerUp);
     window.removeEventListener('pointercancel', this.onPointerUp);
+  }
+
+  setPlayerColors(colors: readonly string[]) {
+    if (colors === this.playerColors) return;
+    this.playerColors = colors;
+    for (const meeple of this.pieces.values()) meeple.body.destroy({ children: true });
+    this.pieces.clear();
   }
 
   setBoard(board: Board) {
@@ -575,7 +582,7 @@ export class BoardRenderer {
   }
 
   private createMeeple(owner: number): Meeple {
-    const color = Number.parseInt(PLAYERS[owner]!.color.slice(1), 16);
+    const color = Number.parseInt(this.playerColors[owner]!.slice(1), 16);
     const body = new Container();
     const figure = new Container();
     const ring = new Graphics().ellipse(0, 0, 18, 8).stroke({ width: 3, color: COLORS.highlight });

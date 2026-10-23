@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Action } from './actions';
 import { rankFinishers } from './rules';
 import { at, trackBoard } from './testing/boards';
-import { newGame, placePiece, run, setDiscard, setDrawPile, setHand, types } from './testing/fixtures';
+import { addPiece, newGame, placePiece, run, setDiscard, setDrawPile, setHand, types } from './testing/fixtures';
 
 const endTurn: Action = { type: 'endTurn', discard: [] };
 
@@ -100,10 +100,10 @@ describe('end of game', () => {
     expect(after.pieces.slice(0, 2).map((p) => p.at)).toEqual(['eldorado', 'eldorado']);
   });
 
-  it('needs both pieces in a 2-player game before the final round starts', () => {
+  it('needs every piece of a player in the City of Gold before the final round starts', () => {
     const state = newGame(trackBoard('G1 FG1 . G1 FG1'));
     placePiece(state, 0, at(0));
-    placePiece(state, 1, at(3));
+    const ownSecond = addPiece(state, 0, at(3));
     const [first, second] = setHand(state, 0, 'explorer', 'explorer');
 
     const one = run(
@@ -115,7 +115,7 @@ describe('end of game', () => {
 
     const both = run(
       one,
-      { type: 'playForMovement', cardId: second!.id, pieceId: 1 },
+      { type: 'playForMovement', cardId: second!.id, pieceId: ownSecond },
       { type: 'step', target: { kind: 'space', hex: at(4) } },
       endTurn,
       endTurn,

@@ -29,14 +29,12 @@ describe('createGame', () => {
     ]);
   });
 
-  it('gives two pieces each in a 2-player game: spaces 1 & 3 for the first player, 2 & 4 for the other', () => {
+  it('gives one piece each in a 2-player game, on spaces 1 and 2', () => {
     const state = createGame({ board, playerCount: 2, seed: 3 });
 
     expect(state.pieces.map((p) => [p.owner, p.at])).toEqual([
       [0, at(0, 2)],
-      [0, at(2, 2)],
       [1, at(1, 2)],
-      [1, at(3, 2)],
     ]);
   });
 

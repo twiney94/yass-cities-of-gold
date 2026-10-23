@@ -3,12 +3,20 @@ import type { GameEvent } from '../engine/actions';
 import { type ActionEffect, CARDS, type CardType } from '../engine/cards';
 import type { GameState } from '../engine/state';
 
-export const PLAYERS = [
-  { name: 'Red', color: '#d9483b' },
-  { name: 'Blue', color: '#2f7fd8' },
-  { name: 'White', color: '#f2efe6' },
-  { name: 'Yellow', color: '#f0c419' },
-] as const;
+export type PlayerLook = { name: string; hex: string };
+
+export const PLAYER_COLORS = {
+  red: { name: 'Red', hex: '#d9483b' },
+  blue: { name: 'Blue', hex: '#2f7fd8' },
+  white: { name: 'White', hex: '#f2efe6' },
+  yellow: { name: 'Yellow', hex: '#f0c419' },
+  purple: { name: 'Purple', hex: '#9a63d8' },
+  orange: { name: 'Orange', hex: '#ef8a2b' },
+  pink: { name: 'Pink', hex: '#ec6fa9' },
+  black: { name: 'Black', hex: '#303136' },
+} as const satisfies Record<string, PlayerLook>;
+
+export type PlayerColor = keyof typeof PLAYER_COLORS;
 
 export const BOT_LEVEL_LABEL: Record<BotLevel, string> = { easy: 'Easy', normal: 'Normal', strong: 'Strong' };
 
@@ -22,10 +30,12 @@ export const EFFECT_TEXT: Record<ActionEffect, string> = {
 };
 
 export const cardName = (type: CardType) => CARDS[type].name;
-const playerName = (index: number) => PLAYERS[index]!.name;
 const names = (types: CardType[]) => types.map(cardName).join(', ');
 
-export const describeEvents = (events: GameEvent[], game: GameState): string[] => {
+type NameOf = (player: number) => string;
+
+export const describeEvents = (events: GameEvent[], game: GameState, players: readonly PlayerLook[]): string[] => {
+  const playerName: NameOf = (index) => players[index]!.name;
   const lines: string[] = [];
   let moved = { player: -1, spaces: 0 };
   const flushMoves = () => {
@@ -38,14 +48,14 @@ export const describeEvents = (events: GameEvent[], game: GameState): string[] =
       continue;
     }
     flushMoves();
-    const line = describe(event, game);
+    const line = describe(event, game, playerName);
     if (line) lines.push(line);
   }
   flushMoves();
   return lines;
 };
 
-const describe = (event: Exclude<GameEvent, { type: 'pieceMoved' }>, game: GameState): string | null => {
+const describe = (event: Exclude<GameEvent, { type: 'pieceMoved' }>, game: GameState, playerName: NameOf): string | null => {
   switch (event.type) {
     case 'cardPlayed':
       return `${playerName(event.player)} played ${cardName(event.card.type)}`;
@@ -60,7 +70,7 @@ const describe = (event: Exclude<GameEvent, { type: 'pieceMoved' }>, game: GameS
     case 'cardGained':
       return event.via === 'purchase'
         ? `${playerName(event.player)} bought ${cardName(event.card.type)}`
-        : `${playerName(event.player)} took ${cardName(event.card.type)} with the Transmitter`;
+        : `${playerName(event.player)} took ${cardName(event.card.type)} with the ${cardName('transmitter')}`;
     case 'marketPileMoved':
       return `${cardName(event.cardType)} joins the market`;
     case 'pieceArrived':

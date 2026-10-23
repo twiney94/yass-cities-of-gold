@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { at, trackBoard } from '../engine/testing/boards';
-import { newGame, placePiece, run, setDrawPile, setHand } from '../engine/testing/fixtures';
+import { addPiece, newGame, placePiece, run, setDrawPile, setHand } from '../engine/testing/fixtures';
 import { type Selection, computeIntents } from './intents';
 
 const game = (track: string) => {
@@ -54,11 +54,11 @@ describe('computeIntents', () => {
 
   it('lets you switch to your other piece after moving one', () => {
     const state = game('G1 G1 . G1 G1');
-    placePiece(state, 1, at(3));
+    const ownSecond = addPiece(state, 0, at(3));
     const [scout, explorer] = setHand(state, 0, 'scout', 'explorer');
     const moved = run(state, ...computeIntents(state, selecting([scout!.id])).board.get(`space:${at(1)}`)!).state;
 
-    const other = computeIntents(moved, selecting([explorer!.id], { pieceId: 1 }));
+    const other = computeIntents(moved, selecting([explorer!.id], { pieceId: ownSecond }));
 
     expect(other.board.has(`space:${at(4)}`)).toBe(true);
   });

@@ -9,6 +9,7 @@ import { BoardRenderer } from './BoardRenderer';
 
 type Props = {
   game: GameState;
+  playerColors: readonly string[];
   targets: ReadonlySet<TargetKey>;
   activePiece: PieceId | null;
   cameraPiece: PieceId | null;
@@ -18,7 +19,7 @@ type Props = {
   onBlockade: (id: BlockadeId) => void;
 };
 
-export function BoardView({ game, targets, activePiece, cameraPiece, focusCue, animation, onSpace, onBlockade }: Props) {
+export function BoardView({ game, playerColors, targets, activePiece, cameraPiece, focusCue, animation, onSpace, onBlockade }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<BoardRenderer | null>(null);
   const handlersRef = useRef({ onSpace, onBlockade });
@@ -74,6 +75,10 @@ export function BoardView({ game, targets, activePiece, cameraPiece, focusCue, a
   useEffect(() => {
     if (ready) rendererRef.current?.setBoard(game.board);
   }, [ready, game.board]);
+
+  useEffect(() => {
+    if (ready) rendererRef.current?.setPlayerColors(playerColors);
+  }, [ready, playerColors]);
 
   useEffect(() => {
     if (ready) rendererRef.current?.update(game, targets, activePiece, animation);

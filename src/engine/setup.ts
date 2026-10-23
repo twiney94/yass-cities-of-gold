@@ -7,12 +7,6 @@ import type { GameState } from './state';
 
 export type GameConfig = { board: Board; playerCount: 2 | 3 | 4; seed: number };
 
-const START_SLOTS: Record<GameConfig['playerCount'], number[][]> = {
-  2: [[1, 3], [2, 4]],
-  3: [[1], [2], [3]],
-  4: [[1], [2], [3], [4]],
-};
-
 const STARTER_TYPES = ALL_CARDS.flatMap((card) =>
   card.supply.from === 'starterDeck' ? Array.from({ length: card.supply.copies }, () => card.type) : [],
 );
@@ -42,18 +36,16 @@ export const createGame = ({ board, playerCount, seed }: GameConfig): GameState 
     finishers: 0,
   };
 
-  START_SLOTS[playerCount].forEach((slots, owner) => {
+  for (let owner = 0; owner < playerCount; owner++) {
     const deck = STARTER_TYPES.map((type) => ({ id: state.nextCardId++, type }));
     const shuffled = shuffle(deck, state.rng);
     state.rng = shuffled.state;
     state.players.push({ drawPile: shuffled.items, hand: [], played: [], discard: [], blockades: [], finishedOrder: null });
     drawCards(state, [], owner, HAND_SIZE);
-    for (const slot of slots) {
-      const at = startSpaces.get(slot);
-      if (!at) throw new Error(`The board has no starting space ${slot}`);
-      state.pieces.push({ id: state.pieces.length, owner, at });
-    }
-  });
+    const at = startSpaces.get(owner + 1);
+    if (!at) throw new Error(`The board has no starting space ${owner + 1}`);
+    state.pieces.push({ id: owner, owner, at });
+  }
 
   return state;
 };

@@ -5,10 +5,10 @@ import { applyActions } from '../engine/rules';
 import { createGame } from '../engine/setup';
 import type { CardId, GameState, PieceId } from '../engine/state';
 import type { Selection } from './intents';
-import { describeEvents } from './labels';
+import { PLAYER_COLORS, type PlayerColor, describeEvents } from './labels';
 import type { GameMap } from './maps';
 
-export type Seat = { kind: 'human' } | { kind: 'bot'; level: BotLevel };
+export type Seat = { color: PlayerColor } & ({ kind: 'human' } | { kind: 'bot'; level: BotLevel });
 export type LogLine = { id: number; text: string };
 export type Animation = { id: number; events: GameEvent[] };
 
@@ -90,7 +90,7 @@ export const useGame = create<GameStore>((set, get) => ({
   choosePiece: (pieceId) => set(({ selection }) => ({ selection: { ...selection, pieceId } })),
 
   perform: (actions) => {
-    const { game, selection, log } = get();
+    const { game, seats, selection, log } = get();
     if (!game) return;
     const result = applyActions(game, actions);
     if (!result.ok) {
@@ -103,7 +103,9 @@ export const useGame = create<GameStore>((set, get) => ({
       selection: turnPassed ? NO_SELECTION : { ...NO_SELECTION, pieceId: selection.pieceId },
       handoff: turnPassed,
       animation: animation(result.events),
-      log: [...log, ...lines(describeEvents(result.events, result.state))].slice(-LOG_LENGTH),
+      log: [...log, ...lines(describeEvents(result.events, result.state, seats.map((seat) => PLAYER_COLORS[seat.color])))].slice(
+        -LOG_LENGTH,
+      ),
       error: null,
     });
   },

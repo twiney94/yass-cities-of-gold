@@ -9,7 +9,7 @@ import { Dock } from './dock';
 import { type CardSnapshot, animateCards, snapshotCards } from './fx/cardMotion';
 import { NO_INTENTS, activePiece, coinsOf, computeIntents, selectedCards } from './intents';
 import { Market } from './market';
-import { PLAYERS } from './labels';
+import { PLAYER_COLORS } from './labels';
 import { ActionBar, EventLog, GameOver, PassScreen, PlayersBar, Toast } from './panels';
 import { useGame } from './store';
 
@@ -17,6 +17,7 @@ const HANDOFF_DELAY = 1500;
 const BOT_PAUSE = 650;
 const BOT_FIRST_PAUSE = 1200;
 const HOP_TIME = 200;
+const OUT_OF_CARDS_PAUSE = 1100;
 
 export function GameScreen() {
   const game = useGame((s) => s.game)!;
@@ -39,6 +40,12 @@ export function GameScreen() {
   const intents = useMemo(() => (interactive ? computeIntents(game, selection) : NO_INTENTS), [interactive, game, selection]);
   const targets = useMemo(() => new Set(intents.board.keys()), [intents]);
   const piece = interactive ? activePiece(game, selection) : null;
+  const players = useMemo(() => seats.map((seat) => PLAYER_COLORS[seat.color]), [seats]);
+  const playerColors = useMemo(() => players.map((player) => player.hex), [players]);
+  const outOfCards =
+    interactive && game.players[game.turn.player]!.hand.length === 0 && !game.turn.pending && intents.board.size === 0
+      ? intents.endTurn
+      : null;
 
   const [marketOpen, setMarketOpen] = useState(false);
   const fxLayer = useRef<HTMLDivElement>(null);
@@ -76,7 +83,20 @@ export function GameScreen() {
     return () => window.clearTimeout(timer);
   }, [botLevel, game, animation, act]);
 
-  const waiting = botLevel ? `${PLAYERS[game.turn.player]!.name} (bot) is playing…` : interactive ? null : 'Turn over…';
+  useEffect(() => {
+    if (!outOfCards) return;
+    const hops = animation.events.filter((event) => event.type === 'pieceMoved').length;
+    const timer = window.setTimeout(() => act([outOfCards]), OUT_OF_CARDS_PAUSE + hops * HOP_TIME);
+    return () => window.clearTimeout(timer);
+  }, [outOfCards, animation, act]);
+
+  const waiting = botLevel
+    ? `${players[game.turn.player]!.name} (bot) is playing…`
+    : outOfCards
+      ? 'No cards left. Ending your turn…'
+      : interactive
+        ? null
+        : 'Turn over…';
 
   const onSpace = useCallback(
     (key: HexKey) => {
@@ -103,6 +123,7 @@ export function GameScreen() {
       <main className="game__main">
         <BoardView
           game={game}
+          playerColors={playerColors}
           targets={targets}
           activePiece={piece}
           cameraPiece={activePiece(game, selection)}
@@ -122,6 +143,7 @@ export function GameScreen() {
       {marketOpen && <div className="sheet-backdrop" onClick={() => setMarketOpen(false)} />}
       <ActionBar
         game={game}
+        player={players[game.turn.player]!}
         intents={intents}
         selectedCount={selection.cards.length}
         waiting={waiting}
@@ -139,9 +161,9 @@ export function GameScreen() {
         />
       )}
       <div className="fx-layer" ref={fxLayer} />
-      {covered && game.status.kind !== 'over' && <PassScreen player={game.turn.player} onReveal={() => animated(reveal)} />}
+      {covered && game.status.kind !== 'over' && <PassScreen player={players[game.turn.player]!} onReveal={() => animated(reveal)} />}
       {game.status.kind === 'over' && (
-        <GameOver game={game} onNewGame={() => newGame(seats, map)} onQuit={quit} />
+        <GameOver game={game} players={players} onNewGame={() => newGame(seats, map)} onQuit={quit} />
       )}
       {error && <Toast message={error} onDone={clearError} />}
     </div>

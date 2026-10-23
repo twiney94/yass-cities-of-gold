@@ -31,6 +31,12 @@ export const placePiece = (state: GameState, pieceId: PieceId, at: HexKey): void
   state.pieces[pieceId]!.at = at;
 };
 
+export const addPiece = (state: GameState, owner: number, at: HexKey): PieceId => {
+  const id = state.pieces.length;
+  state.pieces.push({ id, owner, at });
+  return id;
+};
+
 export const run = (state: GameState, ...actions: Action[]): { state: GameState; events: GameEvent[] } => {
   const result = applyActions(state, actions);
   if (!result.ok) throw new Error(`Rejected: ${result.error}`);

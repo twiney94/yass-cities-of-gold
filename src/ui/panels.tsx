@@ -5,7 +5,7 @@ import type { GameState } from '../engine/state';
 import { cx } from './cx';
 import { Logo } from './Logo';
 import type { Intents } from './intents';
-import { BOT_LEVEL_LABEL, PLAYERS, cardName } from './labels';
+import { BOT_LEVEL_LABEL, PLAYER_COLORS, type PlayerLook, cardName } from './labels';
 import type { LogLine, Seat } from './store';
 
 const cardCount = (game: GameState, player: number) => {
@@ -21,9 +21,9 @@ export function PlayersBar({ game, seats, mapName, onQuit }: PlayersBarProps) {
       <Logo small />
       <span className="players__map muted">{mapName}</span>
       {game.players.map((player, i) => (
-        <div key={PLAYERS[i]!.name} className={cx('player', i === game.turn.player && 'is-current')}>
-          <span className="dot" style={{ background: PLAYERS[i]!.color }} />
-          <strong>{PLAYERS[i]!.name}</strong>
+        <div key={seats[i]!.color} className={cx('player', i === game.turn.player && 'is-current')}>
+          <span className="dot" style={{ background: PLAYER_COLORS[seats[i]!.color].hex }} />
+          <strong>{PLAYER_COLORS[seats[i]!.color].name}</strong>
           {seats[i]?.kind === 'bot' && <span className="tag">{BOT_LEVEL_LABEL[seats[i].level]} bot</span>}
           <span className="player__stat">{cardCount(game, i)} cards</span>
           {player.blockades.length > 0 && <span className="player__stat">blockades {player.blockades.join(', ')}</span>}
@@ -40,6 +40,7 @@ export function PlayersBar({ game, seats, mapName, onQuit }: PlayersBarProps) {
 
 type ActionBarProps = {
   game: GameState;
+  player: PlayerLook;
   intents: Intents;
   selectedCount: number;
   waiting: string | null;
@@ -47,11 +48,10 @@ type ActionBarProps = {
   onMarket: () => void;
 };
 
-export function ActionBar({ game, intents, selectedCount, waiting, onPerform, onMarket }: ActionBarProps) {
+export function ActionBar({ game, player, intents, selectedCount, waiting, onPerform, onMarket }: ActionBarProps) {
   const locked = waiting !== null;
   const { turn } = game;
   const { play } = intents;
-  const player = PLAYERS[turn.player]!;
   const ownPieces = game.pieces.filter((p) => p.owner === turn.player && p.at !== 'eldorado').length;
   const hint = (() => {
     if (waiting) return waiting;
@@ -66,7 +66,7 @@ export function ActionBar({ game, intents, selectedCount, waiting, onPerform, on
   return (
     <div className="actionbar">
       <span className="actionbar__turn">
-        <span className="dot" style={{ background: player.color }} />
+        <span className="dot" style={{ background: player.hex }} />
         {player.name}
       </span>
       <p className="actionbar__hint">
@@ -110,12 +110,12 @@ export function EventLog({ log }: { log: LogLine[] }) {
   );
 }
 
-export function PassScreen({ player, onReveal }: { player: number; onReveal: () => void }) {
-  const { name, color } = PLAYERS[player]!;
+export function PassScreen({ player, onReveal }: { player: PlayerLook; onReveal: () => void }) {
+  const { name, hex } = player;
   return (
     <div className="overlay">
       <div className="overlay__panel">
-        <span className="dot dot--big" style={{ background: color }} />
+        <span className="dot dot--big" style={{ background: hex }} />
         <h2>{name}'s turn</h2>
         <p className="muted">Pass the device to {name}. Everyone else, look away from the hand.</p>
         <button type="button" className="btn btn--primary" onClick={onReveal}>
@@ -126,18 +126,20 @@ export function PassScreen({ player, onReveal }: { player: number; onReveal: () 
   );
 }
 
-export function GameOver({ game, onNewGame, onQuit }: { game: GameState; onNewGame: () => void; onQuit: () => void }) {
+type GameOverProps = { game: GameState; players: readonly PlayerLook[]; onNewGame: () => void; onQuit: () => void };
+
+export function GameOver({ game, players, onNewGame, onQuit }: GameOverProps) {
   const ranking = rankFinishers(game);
-  const winner = PLAYERS[ranking[0]!]!;
+  const winner = players[ranking[0]!]!;
   return (
     <div className="overlay">
       <div className="overlay__panel">
-        <span className="dot dot--big" style={{ background: winner.color }} />
+        <span className="dot dot--big" style={{ background: winner.hex }} />
         <h2>{winner.name} reaches the City of Gold first!</h2>
         <ol className="ranking">
           {ranking.map((index) => (
             <li key={index}>
-              {PLAYERS[index]!.name} · {game.players[index]!.blockades.length} blockade(s)
+              {players[index]!.name} · {game.players[index]!.blockades.length} blockade(s)
             </li>
           ))}
         </ol>

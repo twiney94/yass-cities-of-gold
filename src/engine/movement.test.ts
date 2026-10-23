@@ -3,7 +3,7 @@ import type { Target } from './actions';
 import type { Blockade } from './board';
 import type { HexKey } from './hex';
 import { at, trackBoard } from './testing/boards';
-import { ids, newGame, placePiece, rejection, run, setDrawPile, setHand, types } from './testing/fixtures';
+import { addPiece, ids, newGame, placePiece, rejection, run, setDrawPile, setHand, types } from './testing/fixtures';
 
 const game = (track: string, blockades: Blockade[] = []) => {
   const state = newGame(trackBoard(track, blockades));
@@ -107,12 +107,12 @@ describe('moving with a card', () => {
 
   it('never enters a space taken by another piece, your own included', () => {
     const state = game('G1 G1 G1');
-    placePiece(state, 1, at(1));
-    placePiece(state, 2, at(2));
+    const ownSecond = addPiece(state, 0, at(1));
+    placePiece(state, 1, at(2));
     const [first, second] = setHand(state, 0, 'explorer', 'explorer');
 
     const ownBlocked = run(state, { type: 'playForMovement', cardId: first!.id, pieceId: 0 }).state;
-    const opponentBlocked = run(state, { type: 'playForMovement', cardId: second!.id, pieceId: 1 }).state;
+    const opponentBlocked = run(state, { type: 'playForMovement', cardId: second!.id, pieceId: ownSecond }).state;
 
     expect(rejection(ownBlocked, { type: 'step', target: space(at(1)) })).toBe('That space is occupied');
     expect(rejection(opponentBlocked, { type: 'step', target: space(at(2)) })).toBe('That space is occupied');
@@ -120,29 +120,29 @@ describe('moving with a card', () => {
 
   it('never returns to a starting space', () => {
     const state = game('G1 G1');
-    placePiece(state, 3, at(1));
+    placePiece(state, 0, at(2, 2));
     const [native] = setHand(state, 0, 'native');
 
-    expect(rejection(state, { type: 'playNative', cardId: native!.id, pieceId: 1, target: space(at(3, 2)) })).toBe(
+    expect(rejection(state, { type: 'playNative', cardId: native!.id, pieceId: 0, target: space(at(3, 2)) })).toBe(
       'Starting spaces cannot be entered',
     );
   });
 
-  it('applies each card to one piece of your choice in a 2-player game', () => {
+  it('applies each card to one piece of your choice when you have several', () => {
     const state = game('G1 G1 . G1 G1');
-    placePiece(state, 1, at(3));
+    const ownSecond = addPiece(state, 0, at(3));
     const [first, second] = setHand(state, 0, 'explorer', 'explorer');
 
     const after = run(
       state,
       { type: 'playForMovement', cardId: first!.id, pieceId: 0 },
       { type: 'step', target: space(at(1)) },
-      { type: 'playForMovement', cardId: second!.id, pieceId: 1 },
+      { type: 'playForMovement', cardId: second!.id, pieceId: ownSecond },
       { type: 'step', target: space(at(4)) },
     ).state;
 
-    expect([after.pieces[0]!.at, after.pieces[1]!.at]).toEqual([at(1), at(4)]);
-    expect(rejection(state, { type: 'playForMovement', cardId: first!.id, pieceId: 2 })).toBe('That is not your piece');
+    expect([after.pieces[0]!.at, after.pieces[ownSecond]!.at]).toEqual([at(1), at(4)]);
+    expect(rejection(state, { type: 'playForMovement', cardId: first!.id, pieceId: 1 })).toBe('That is not your piece');
   });
 });
 
@@ -290,14 +290,14 @@ describe('Native', () => {
 
   it('cannot enter mountains or occupied spaces', () => {
     const state = game('G1 M G1');
-    placePiece(state, 1, at(2));
     const [native] = setHand(state, 0, 'native');
 
     expect(rejection(state, { type: 'playNative', cardId: native!.id, pieceId: 0, target: space(at(1)) })).toBe(
       'Mountains can never be entered',
     );
-    placePiece(state, 2, at(1));
-    expect(rejection(state, { type: 'playNative', cardId: native!.id, pieceId: 1, target: space(at(1)) })).toBe(
+    placePiece(state, 0, at(2));
+    placePiece(state, 1, at(1));
+    expect(rejection(state, { type: 'playNative', cardId: native!.id, pieceId: 0, target: space(at(1)) })).toBe(
       'That space is occupied',
     );
   });
