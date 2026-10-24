@@ -683,17 +683,17 @@ h3 {
   }
 }
 
-.meeple {
+.pawn {
   display: block;
   height: auto;
-  stroke: #1a120a;
-  stroke-width: 2;
+  overflow: visible;
 }
 
-.meeple .meeple__band {
-  fill: none;
-  stroke: rgb(0 0 0 / 35%);
-  stroke-width: 1.8;
+.pawn__outline {
+  fill: #1a120a;
+  stroke: #1a120a;
+  stroke-width: 2.4;
+  stroke-linejoin: round;
 }
 
 .modes {
@@ -747,18 +747,16 @@ h3 {
     0 1px 0 rgb(255 228 175 / 25%);
 }
 
-.mode__icon .meeple {
+.mode__icon .pawn {
+  width: 24px;
+}
+
+.mode__icon--pair .pawn {
   width: 19px;
-  fill: var(--gold);
 }
 
-.mode__icon--pair .meeple {
-  width: 16px;
-}
-
-.mode__icon--pair .meeple + .meeple {
-  margin-left: -5px;
-  fill: #e7d9b4;
+.mode__icon--pair .pawn + .pawn {
+  margin-left: -6px;
 }
 
 .mode__text {
@@ -866,9 +864,6 @@ h3 {
 
 .rules__pawn {
   width: 34px;
-  fill: #d9483b;
-  stroke: #1a120a;
-  stroke-width: 2;
 }
 
 .rules__trail {

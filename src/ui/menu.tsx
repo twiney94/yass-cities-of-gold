@@ -14,7 +14,7 @@ import photographer from './art/figures/photographer.webp';
 import pioneer from './art/figures/pioneer.webp';
 import scientist from './art/figures/scientist.webp';
 import trailblazer from './art/figures/trailblazer.webp';
-import { PAWN_BAND, PAWN_PATH, PAWN_VIEWBOX } from './art/pawn';
+import { PawnIcon } from './art/PawnIcon';
 import { CheckIcon, CopyIcon, CrownIcon, PlayIcon, RefreshIcon } from './art/setupIcons';
 import { type Option, Segmented } from './Segmented';
 import { cx } from './cx';
@@ -93,15 +93,6 @@ const saveSetup = (mode: Mode, setup: Setup) => {
   }
 };
 
-function Meeple() {
-  return (
-    <svg className="meeple" viewBox={PAWN_VIEWBOX} aria-hidden="true">
-      <path d={PAWN_PATH} />
-      <path className="meeple__band" d={PAWN_BAND} />
-    </svg>
-  );
-}
-
 type TitleProps = { save: SavedGame | null; onMode: (mode: Mode) => void; onContinue: () => void };
 
 export function TitleScreen({ save, onMode, onContinue }: TitleProps) {
@@ -134,7 +125,7 @@ export function TitleScreen({ save, onMode, onContinue }: TitleProps) {
           {save && (
             <button type="button" className="mode mode--continue wood" onClick={onContinue}>
               <span className="mode__icon">
-                <Meeple />
+                <PawnIcon color="#f2c14e" />
               </span>
               <span className="mode__text">
                 <strong>{m.menu.continue}</strong>
@@ -144,7 +135,7 @@ export function TitleScreen({ save, onMode, onContinue }: TitleProps) {
           )}
           <button type="button" className="mode wood" onClick={() => onMode('solo')}>
             <span className="mode__icon">
-              <Meeple />
+              <PawnIcon color="#f2c14e" />
             </span>
             <span className="mode__text">
               <strong>{m.menu.solo}</strong>
@@ -152,8 +143,8 @@ export function TitleScreen({ save, onMode, onContinue }: TitleProps) {
           </button>
           <button type="button" className="mode wood" onClick={() => onMode('passAndPlay')}>
             <span className="mode__icon mode__icon--pair">
-              <Meeple />
-              <Meeple />
+              <PawnIcon color="#f2c14e" />
+              <PawnIcon color="#e7d9b4" />
             </span>
             <span className="mode__text">
               <strong>{m.menu.passAndPlay}</strong>

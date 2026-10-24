@@ -6,7 +6,7 @@ import type { Suit } from '../../engine/cards';
 import { DIRECTIONS, type Hex, type HexKey, addHex, hexDisk, hexDistance, hexKey } from '../../engine/hex';
 import type { TargetKey } from '../../engine/moves';
 import type { GameState, PieceId } from '../../engine/state';
-import { PAWN_BAND, PAWN_PATH } from '../art/pawn';
+import { PAWN_LAYERS, PAWN_SILHOUETTE } from '../art/pawn';
 
 type Point = { x: number; y: number };
 type Handlers = { onSpace: (key: HexKey) => void; onBlockade: (id: BlockadeId) => void };
@@ -727,24 +727,11 @@ export class BoardRenderer {
     const body = new Container();
     const figure = new Container();
     const ring = new Graphics().ellipse(0, 0, 18, 8).stroke({ width: 3, color: COLORS.highlight });
-    const silhouette = new Graphics().path(new GraphicsPath(PAWN_PATH)).fill(color).stroke({ width: 2, color: COLORS.outline });
-    const shading = new Graphics()
-      .path(new GraphicsPath(PAWN_BAND))
-      .stroke({ width: 1.8, color: shade(color, 0.55) })
-      .moveTo(-4.2, -38.1)
-      .quadraticCurveTo(-2.6, -39.5, -0.9, -38.9)
-      .moveTo(-10.2, -32.9)
-      .lineTo(-6.4, -33.1)
-      .stroke({ width: 1.2, color: 0xffffff, alpha: 0.4, cap: 'round' })
-      .moveTo(-8.4, -22.5)
-      .lineTo(-8.8, -14)
-      .stroke({ width: 1.4, color: 0xffffff, alpha: 0.28, cap: 'round' })
-      .moveTo(-2.5, -24)
-      .quadraticCurveTo(-1.2, -18, -2.2, -12)
-      .moveTo(3, -23)
-      .quadraticCurveTo(4.2, -17, 3.2, -12.5)
-      .stroke({ width: 0.8, color: shade(color, 0.78), alpha: 0.6 });
-    figure.addChild(silhouette, shading);
+    const pawn = new Graphics().path(new GraphicsPath(PAWN_SILHOUETTE)).stroke({ width: 3, color: COLORS.outline, join: 'round' });
+    for (const layer of PAWN_LAYERS) {
+      pawn.path(new GraphicsPath(layer.d)).fill({ color: layer.fill === 'player' ? color : layer.fill, alpha: layer.alpha ?? 1 });
+    }
+    figure.addChild(pawn);
     body.addChild(new Graphics().ellipse(0, 0, 12, 5).fill({ color: 0x000000, alpha: 0.35 }), ring, figure);
     const meeple: Meeple = { body, figure, ring, at: null };
     body.cursor = 'pointer';

@@ -4,7 +4,7 @@ import type { BlockadeId } from '../../engine/board';
 import type { HexKey } from '../../engine/hex';
 import type { TargetKey } from '../../engine/moves';
 import type { GameState, PieceId } from '../../engine/state';
-import { PAWN_PATH, PAWN_VIEWBOX } from '../art/pawn';
+import { PAWN_SILHOUETTE, PAWN_VIEWBOX } from '../art/pawn';
 import { useMessages } from '../i18n';
 import type { Animation } from '../store';
 import { BoardRenderer, type Insets } from './BoardRenderer';
@@ -119,7 +119,7 @@ export function BoardView(props: Props) {
         </button>
         <button type="button" className="btn" aria-label={m.game.myPawn} onClick={() => rendererRef.current?.focusPiece(ownPiece ?? cameraPiece)}>
           <svg className="board__icon" viewBox={PAWN_VIEWBOX} aria-hidden="true">
-            <path d={PAWN_PATH} fill="currentColor" />
+            <path d={PAWN_SILHOUETTE} fill="currentColor" />
           </svg>
           <span className="board__label">{m.game.myPawn}</span>
         </button>

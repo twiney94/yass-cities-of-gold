@@ -3,7 +3,7 @@ import type { CardType } from '../engine/cards';
 import { CardView } from './CardView';
 import { Dialog } from './Dialog';
 import { Logo } from './Logo';
-import { PAWN_PATH, PAWN_VIEWBOX } from './art/pawn';
+import { PawnIcon } from './art/PawnIcon';
 import { cx } from './cx';
 import { useMessages } from './i18n';
 
@@ -68,9 +68,7 @@ const MiniCard = ({ x, crossed }: { x: number; crossed?: boolean }) => (
 
 const RacePicture = () => (
   <div className="rules__picture">
-    <svg className="rules__pawn" viewBox={PAWN_VIEWBOX} aria-hidden="true">
-      <path d={PAWN_PATH} />
-    </svg>
+    <PawnIcon className="rules__pawn" color="#d9483b" />
     <span className="rules__trail" aria-hidden="true" />
     <img className="rules__city" src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" />
   </div>
