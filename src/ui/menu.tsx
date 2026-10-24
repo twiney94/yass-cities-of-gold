@@ -6,8 +6,16 @@ import { CursorTrail } from './CursorTrail';
 import { LanguageSwitch } from './LanguageSwitch';
 import { SoundSwitch } from './SoundSwitch';
 import { Logo } from './Logo';
-import { MenuScene } from './MenuScene';
+import adventurer from './art/figures/adventurer.webp';
+import captain from './art/figures/captain.webp';
+import explorer from './art/figures/explorer.webp';
+import journalist from './art/figures/journalist.webp';
+import photographer from './art/figures/photographer.webp';
+import pioneer from './art/figures/pioneer.webp';
+import scientist from './art/figures/scientist.webp';
+import trailblazer from './art/figures/trailblazer.webp';
 import { PAWN_BAND, PAWN_PATH, PAWN_VIEWBOX } from './art/pawn';
+import { CheckIcon, CopyIcon, CrownIcon, PlayIcon, RefreshIcon } from './art/setupIcons';
 import { type Option, Segmented } from './Segmented';
 import { cx } from './cx';
 import { type Messages, useMessages } from './i18n';
@@ -22,6 +30,16 @@ export type Mode = 'solo' | 'passAndPlay';
 type MapChoice = 'standin' | Difficulty;
 
 const COLORS = Object.keys(PLAYER_COLORS) as PlayerColor[];
+const PORTRAITS: Record<PlayerColor, string> = {
+  red: pioneer,
+  blue: photographer,
+  white: journalist,
+  yellow: explorer,
+  purple: scientist,
+  orange: trailblazer,
+  pink: adventurer,
+  black: captain,
+};
 const COUNTS: Option<number>[] = [2, 3, 4].map((count) => ({ value: count, label: String(count) }));
 const LEVELS: BotLevel[] = ['easy', 'normal', 'strong'];
 const MAPS: { value: MapChoice; pips: number }[] = [
@@ -93,7 +111,6 @@ export function TitleScreen({ save, onMode, onContinue }: TitleProps) {
   const intro = useIntro(yassRef);
   return (
     <div className={cx('menu', intro.withIntro && 'with-intro', intro.withIntro && `is-${intro.phase}`)} style={intro.style}>
-      <MenuScene />
       {intro.withIntro && <BurnVeil phase={intro.phase} />}
       {intro.phase === 'gate' && (
         <button type="button" className="intro-gate" onClick={intro.begin} autoFocus>
@@ -131,7 +148,6 @@ export function TitleScreen({ save, onMode, onContinue }: TitleProps) {
             </span>
             <span className="mode__text">
               <strong>{m.menu.solo}</strong>
-              <span className="muted">{m.menu.soloBlurb}</span>
             </span>
           </button>
           <button type="button" className="mode wood" onClick={() => onMode('passAndPlay')}>
@@ -141,7 +157,6 @@ export function TitleScreen({ save, onMode, onContinue }: TitleProps) {
             </span>
             <span className="mode__text">
               <strong>{m.menu.passAndPlay}</strong>
-              <span className="muted">{m.menu.passAndPlayBlurb}</span>
             </span>
           </button>
         </nav>
@@ -156,7 +171,7 @@ export function TitleScreen({ save, onMode, onContinue }: TitleProps) {
       </div>
       {info === 'rules' && <RulesDialog onClose={() => setInfo(null)} />}
       {info === 'about' && <AboutDialog onClose={() => setInfo(null)} />}
-      <CursorTrail />
+      {intro.phase === 'menu' && <CursorTrail />}
     </div>
   );
 }
@@ -172,6 +187,8 @@ export function SetupScreen({ mode, onBack, onStart }: SetupProps) {
   const [code, setCode] = useState(() => mapCode(choice === 'standin' ? 'medium' : choice, randomSeed()));
   const [generating, setGenerating] = useState(false);
   const [problem, setProblem] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const codeRef = useRef<HTMLInputElement>(null);
 
   const kinds: Option<Seat['kind']>[] = [
     { value: 'human', label: m.menu.human },
@@ -197,6 +214,15 @@ export function SetupScreen({ mode, onBack, onStart }: SetupProps) {
   };
   const parsed = choice === 'standin' ? null : parseMapCode(code);
 
+  const copy = () =>
+    navigator.clipboard.writeText(code).then(
+      () => {
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1500);
+      },
+      () => codeRef.current?.select(),
+    );
+
   const start = async () => {
     saveSetup(mode, { seats, choice });
     if (choice === 'standin') return onStart(seats, standinMap());
@@ -214,7 +240,7 @@ export function SetupScreen({ mode, onBack, onStart }: SetupProps) {
   return (
     <div className="menu menu--setup">
       <header className="menu__bar">
-        <button type="button" className="btn btn--ghost menu__back" onClick={onBack}>
+        <button type="button" className="btn menu__back" onClick={onBack}>
           {m.menu.back}
         </button>
         <h1>{modeName(mode, m)}</h1>
@@ -230,10 +256,11 @@ export function SetupScreen({ mode, onBack, onStart }: SetupProps) {
                 type="button"
                 role="radio"
                 aria-checked={choice === value}
-                className={cx('map-choice', choice === value && 'is-on')}
+                className={cx('map-choice', `map-choice--${value}`, choice === value && 'is-on')}
                 onClick={() => pick(value)}
               >
-                <span>{mapLabel(value, m)}</span>
+                <span className="map-choice__art" aria-hidden />
+                <span className="map-choice__name">{mapLabel(value, m)}</span>
                 {pips > 0 && (
                   <span className="pips" aria-hidden>
                     {[1, 2, 3].map((pip) => (
@@ -247,8 +274,21 @@ export function SetupScreen({ mode, onBack, onStart }: SetupProps) {
           {choice !== 'standin' && (
             <div className="map-code">
               <label htmlFor="map-code">{m.menu.mapCode}</label>
-              <input id="map-code" value={code} onChange={(event) => editCode(event.target.value)} spellCheck={false} aria-invalid={!parsed} />
-              <button type="button" className="btn" onClick={() => pick(choice)}>
+              <span className="map-code__field">
+                <input
+                  ref={codeRef}
+                  id="map-code"
+                  value={code}
+                  onChange={(event) => editCode(event.target.value)}
+                  spellCheck={false}
+                  aria-invalid={!parsed}
+                />
+                <button type="button" className="map-code__copy" aria-label={copied ? m.menu.copied : m.menu.copyCode} title={copied ? m.menu.copied : m.menu.copyCode} onClick={copy}>
+                  {copied ? <CheckIcon /> : <CopyIcon />}
+                </button>
+              </span>
+              <button type="button" className="btn map-code__new" onClick={() => pick(choice)}>
+                <RefreshIcon />
                 {m.menu.newMap}
               </button>
             </div>
@@ -269,15 +309,18 @@ export function SetupScreen({ mode, onBack, onStart }: SetupProps) {
                 <li key={i} className="seat" style={{ '--seat': PLAYER_COLORS[seat.color] } as CSSProperties}>
                   <button
                     type="button"
-                    className="seat__color"
+                    className="seat__portrait"
                     aria-label={m.menu.changeColor(name)}
                     aria-expanded={palette === i}
                     onClick={() => setPalette(palette === i ? null : i)}
                   >
-                    <Meeple />
+                    <img src={PORTRAITS[seat.color]} alt="" />
                   </button>
                   <span className="seat__who">
-                    <strong>{name}</strong>
+                    <strong>
+                      {fixed && i === 0 && <CrownIcon />}
+                      {name}
+                    </strong>
                     {fixed && <span className="muted">{i === 0 ? m.menu.you : m.menu.bot}</span>}
                   </span>
                   <span className="seat__controls">
@@ -333,8 +376,11 @@ export function SetupScreen({ mode, onBack, onStart }: SetupProps) {
       <footer className="menu__footer">
         {problem && <p className="menu__problem">{m.menu.generateFailed}</p>}
         {mode === 'passAndPlay' && <p className="muted menu__note">{m.menu.passNote}</p>}
-        <button type="button" className="btn btn--primary btn--big menu__start" disabled={generating || (choice !== 'standin' && !parsed)} onClick={start}>
-          {m.menu.start}
+        <button type="button" className="menu__start" disabled={generating || (choice !== 'standin' && !parsed)} onClick={start}>
+          <span>
+            <PlayIcon />
+            {m.menu.start}
+          </span>
         </button>
       </footer>
 

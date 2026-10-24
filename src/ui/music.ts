@@ -1,6 +1,6 @@
 import gameTheme from './audio/treasure-of-the-lost-city-in-game.mp3';
 import menuTheme from './audio/treasure-of-the-lost-city.mp3';
-import { useSound } from './sound';
+import { loudness, useSound } from './sound';
 
 export type MusicScene = 'menu' | 'game';
 
@@ -50,20 +50,32 @@ const retryOnGesture = () => {
   window.addEventListener('keydown', retry);
 };
 
+const level = () => VOLUME * loudness(useSound.getState().volume);
+
 // The wanted scene fades in, every other track fades out and stops; muting fades everything out.
 const sync = () => {
-  const muted = useSound.getState().muted;
+  const { muted, volume } = useSound.getState();
   for (const [name, audio] of tracks) {
-    if (name === scene && !muted) {
+    if (name === scene && !muted && volume > 0) {
       audio.play().catch(retryOnGesture);
-      fadeTo(audio, VOLUME);
+      fadeTo(audio, level());
     } else if (!audio.paused) {
       fadeTo(audio, 0, () => audio.pause());
     }
   }
 };
 
-useSound.subscribe(sync);
+// Dragging the volume slider sets the playing track at once instead of restarting its fade.
+useSound.subscribe(({ muted, volume }, previous) => {
+  const audio = scene ? tracks.get(scene) : undefined;
+  if (muted === previous.muted && volume > 0 && audio && !audio.paused) {
+    window.clearInterval(fades.get(audio));
+    fades.delete(audio);
+    audio.volume = level();
+  } else {
+    sync();
+  }
+});
 
 export const canAutoplay = () =>
   (navigator as Navigator & { getAutoplayPolicy?: (type: 'mediaelement') => string }).getAutoplayPolicy?.('mediaelement') === 'allowed';

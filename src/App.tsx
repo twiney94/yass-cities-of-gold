@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { DiceRoll } from './ui/DiceRoll';
+import { MenuScene } from './ui/MenuScene';
 import type { GameMap } from './ui/maps';
 import { type Mode, SetupScreen, TitleScreen } from './ui/menu';
 import { loadSave } from './ui/save';
@@ -38,6 +39,7 @@ export default function App() {
 
   return (
     <>
+      <MenuScene dim={screen.kind === 'setup'} />
       {screen.kind === 'title' ? (
         <TitleScreen save={save} onMode={(mode) => setScreen({ kind: 'setup', mode })} onContinue={() => save && resume(save)} />
       ) : (

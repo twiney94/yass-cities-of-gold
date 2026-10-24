@@ -3,33 +3,55 @@ import type { GameEvent } from '../engine/actions';
 
 export type Sound = 'card' | 'draw' | 'hop' | 'coins' | 'break' | 'burn' | 'shuffle' | 'turn' | 'arrive' | 'victory' | 'dice';
 
-const KEY = 'yass-cities-of-gold.muted';
+const MUTED_KEY = 'yass-cities-of-gold.muted';
+const VOLUME_KEY = 'yass-cities-of-gold.volume';
 
-const readMuted = () => {
+const read = (key: string) => {
   try {
-    return localStorage.getItem(KEY) === '1';
+    return localStorage.getItem(key);
   } catch {
-    return false;
+    return null;
   }
 };
 
-export const useSound = create<{ muted: boolean; toggle: () => void }>((set, get) => ({
-  muted: typeof localStorage === 'undefined' ? false : readMuted(),
+const save = (key: string, value: string) => {
+  try {
+    localStorage.setItem(key, value);
+  } catch (error) {
+    console.warn('The sound setting could not be saved', error);
+  }
+};
+
+const savedVolume = () => {
+  const volume = Number(read(VOLUME_KEY) ?? 1);
+  return volume >= 0 && volume <= 1 ? volume : 1;
+};
+
+type SoundState = { muted: boolean; volume: number; toggle: () => void; setVolume: (volume: number) => void };
+
+export const useSound = create<SoundState>((set, get) => ({
+  muted: read(MUTED_KEY) === '1',
+  volume: savedVolume(),
   toggle: () => {
     const muted = !get().muted;
-    try {
-      localStorage.setItem(KEY, muted ? '1' : '0');
-    } catch (error) {
-      console.warn('The sound setting could not be saved', error);
-    }
+    save(MUTED_KEY, muted ? '1' : '0');
     set({ muted });
   },
+  setVolume: (volume) => {
+    save(VOLUME_KEY, String(volume));
+    save(MUTED_KEY, '0');
+    set({ volume, muted: false });
+  },
 }));
+
+// Loudness grows with the square of the slider, which feels even across its whole travel.
+export const loudness = (volume: number) => volume ** 2;
 
 type Tone = { type?: OscillatorType; from: number; to?: number; at?: number; length: number; volume?: number };
 type Noise = { at?: number; length: number; volume?: number; filter?: BiquadFilterType; frequency?: number; q?: number };
 
 let context: AudioContext | null = null;
+let master: GainNode | null = null;
 
 const tone = (ctx: AudioContext, { type = 'sine', from, to = from, at = 0, length, volume = 0.2 }: Tone) => {
   const start = ctx.currentTime + at;
@@ -41,7 +63,7 @@ const tone = (ctx: AudioContext, { type = 'sine', from, to = from, at = 0, lengt
   gain.gain.setValueAtTime(0.0001, start);
   gain.gain.exponentialRampToValueAtTime(volume, start + 0.01);
   gain.gain.exponentialRampToValueAtTime(0.0001, start + length);
-  oscillator.connect(gain).connect(ctx.destination);
+  oscillator.connect(gain).connect(master ?? ctx.destination);
   oscillator.start(start);
   oscillator.stop(start + length + 0.02);
 };
@@ -58,7 +80,7 @@ const noise = (ctx: AudioContext, { at = 0, length, volume = 0.2, filter = 'band
   shape.frequency.value = frequency;
   shape.Q.value = q;
   gain.gain.value = volume;
-  source.connect(shape).connect(gain).connect(ctx.destination);
+  source.connect(shape).connect(gain).connect(master ?? ctx.destination);
   source.start(ctx.currentTime + at);
 };
 
@@ -99,13 +121,19 @@ const VOICES: Record<Sound, (ctx: AudioContext) => void> = {
 };
 
 export const playSound = (sound: Sound, delay = 0) => {
-  if (useSound.getState().muted) return;
+  const { muted, volume } = useSound.getState();
+  if (muted || volume === 0) return;
   if (delay > 0) {
     window.setTimeout(() => playSound(sound), delay);
     return;
   }
   try {
     context ??= new AudioContext();
+    if (!master) {
+      master = context.createGain();
+      master.connect(context.destination);
+    }
+    master.gain.value = loudness(volume);
     if (context.state === 'suspended') void context.resume();
     VOICES[sound](context);
   } catch (error) {

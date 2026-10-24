@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import backdrop from './art/menu-backdrop.webp';
+import { cx } from './cx';
 
 const MOTES = Array.from({ length: 18 }, (_, i) => {
   const duration = 9 + ((i * 2.3) % 7);
@@ -13,9 +14,9 @@ const MOTES = Array.from({ length: 18 }, (_, i) => {
   } as CSSProperties;
 });
 
-export function MenuScene() {
+export function MenuScene({ dim }: { dim: boolean }) {
   return (
-    <div className="scene" aria-hidden="true">
+    <div className={cx('scene', dim && 'scene--dim')} aria-hidden="true">
       <div className="scene__frame">
         <img className="scene__art" src={backdrop} alt="" />
         <div className="scene__sun" />
