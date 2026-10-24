@@ -12,7 +12,9 @@ export const parseSave = (raw: string | null): SavedGame | null => {
   try {
     const save = JSON.parse(raw) as Partial<SavedGame> & { version?: number };
     if (save.version !== VERSION || !save.game || !save.map || !Array.isArray(save.seats) || !Array.isArray(save.log)) return null;
-    return { game: save.game, map: save.map, seats: save.seats, viewer: save.viewer ?? 0, log: save.log };
+    // Games saved before removed cards were kept per player resume with empty removed piles.
+    const players = save.game.players.map((player) => ({ ...player, removed: player.removed ?? [] }));
+    return { game: { ...save.game, players }, map: save.map, seats: save.seats, viewer: save.viewer ?? 0, log: save.log };
   } catch {
     return null;
   }

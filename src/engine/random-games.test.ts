@@ -117,6 +117,7 @@ const assertInvariants = (state: GameState) => {
   const sold = Object.values(state.market.remaining).reduce((sum, left = 0) => sum + COPIES_PER_MARKET_PILE - left, 0);
   expect(new Set(all.map((c) => c.id)).size).toBe(all.length);
   expect(all.length).toBe(state.players.length * 8 + sold);
+  expect(state.players.flatMap((p) => p.removed.map((c) => c.id)).sort()).toEqual(state.box.map((c) => c.id).sort());
 
   const occupied = state.pieces.flatMap((p) => (p.at === 'eldorado' ? [] : [p.at]));
   expect(new Set(occupied).size).toBe(occupied.length);

@@ -343,6 +343,7 @@ const playCard = (ctx: Ctx, card: Card, usedItsFunction: boolean) => {
 
 const removeFromGame = (ctx: Ctx, cards: Card[]) => {
   ctx.state.box.push(...cards);
+  ctx.player.removed.push(...cards);
   ctx.events.push({ type: 'cardsRemoved', player: ctx.playerIndex, cards });
 };
 
@@ -359,6 +360,7 @@ const cloneState = (state: GameState): GameState => ({
     hand: [...p.hand],
     played: [...p.played],
     discard: [...p.discard],
+    removed: [...p.removed],
     blockades: [...p.blockades],
   })),
   pieces: state.pieces.map((p) => ({ ...p })),

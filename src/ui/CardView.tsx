@@ -43,6 +43,11 @@ export function CardView({ type, id, size = 'large', selected, target, onClick, 
           {type && <CardFront type={type} />}
           <div className="card__back" />
         </div>
+        {type && (
+          <span className="card__caption" aria-hidden="true">
+            {m.cards[type]}
+          </span>
+        )}
       </div>
     </div>
   );

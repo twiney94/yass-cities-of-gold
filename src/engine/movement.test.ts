@@ -182,6 +182,7 @@ describe('rubble and base camps', () => {
     const after = run(state, { type: 'payCards', pieceId: 0, target: space(at(1)), cardIds: [traveler!.id] }).state;
 
     expect(types(after.box)).toEqual(['traveler']);
+    expect(types(after.players[0]!.removed)).toEqual(['traveler']);
     expect(after.players[0]!.played).toEqual([]);
   });
 

@@ -79,11 +79,11 @@ function Stack({ cards, faceDown }: { cards: Card[]; faceDown: boolean }) {
   );
 }
 
-function DiscardDialog({ cards, onClose }: { cards: Card[]; onClose: () => void }) {
+function PileDialog({ title, cards, onClose }: { title: string; cards: Card[]; onClose: () => void }) {
   const m = useMessages();
   return (
     <Dialog
-      title={m.game.discardTitle(cards.length)}
+      title={title}
       className="discard-dialog"
       onClose={onClose}
       footer={
@@ -111,11 +111,25 @@ type TrayProps = {
 
 export function Tray({ ref, player, handHidden, selected, onToggle }: TrayProps) {
   const m = useMessages();
-  const [discardOpen, setDiscardOpen] = useState(false);
+  const [open, setOpen] = useState<'discard' | 'removed' | null>(null);
   const owned = player.drawPile.length + player.hand.length + player.played.length + player.discard.length;
   return (
     <footer className="tray" ref={ref}>
       <div className="zone zone--draw">
+        <div className="zone zone--removed">
+          <button
+            type="button"
+            className="stack-button"
+            aria-label={m.game.seeRemoved}
+            disabled={player.removed.length === 0}
+            onClick={() => setOpen('removed')}
+          >
+            <Stack cards={player.removed} faceDown={false} />
+          </button>
+          <span className="zone__label">
+            {m.game.removed} · {player.removed.length}
+          </span>
+        </div>
         <Stack cards={player.drawPile} faceDown />
         <span className="zone__count">
           {player.drawPile.length}/{owned}
@@ -139,14 +153,15 @@ export function Tray({ ref, player, handHidden, selected, onToggle }: TrayProps)
           className="stack-button"
           aria-label={m.game.seeDiscard}
           disabled={player.discard.length === 0}
-          onClick={() => setDiscardOpen(true)}
+          onClick={() => setOpen('discard')}
         >
           <Stack cards={player.discard} faceDown={false} />
         </button>
         <span className="zone__count">{player.discard.length}</span>
         <span className="zone__label">{m.game.discard}</span>
       </div>
-      {discardOpen && <DiscardDialog cards={player.discard} onClose={() => setDiscardOpen(false)} />}
+      {open === 'discard' && <PileDialog title={m.game.discardTitle(player.discard.length)} cards={player.discard} onClose={() => setOpen(null)} />}
+      {open === 'removed' && <PileDialog title={m.game.removedTitle(player.removed.length)} cards={player.removed} onClose={() => setOpen(null)} />}
     </footer>
   );
 }

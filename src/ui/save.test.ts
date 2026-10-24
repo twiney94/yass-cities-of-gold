@@ -25,4 +25,10 @@ describe('saved games', () => {
     expect(parseSave('{not json')).toBeNull();
     expect(parseSave(JSON.stringify({ ...save, version: 0 }))).toBeNull();
   });
+
+  it('resume with empty removed piles when stored before players kept them', () => {
+    const stored = JSON.parse(serializeSave(save));
+    for (const player of stored.game.players) delete player.removed;
+    expect(parseSave(JSON.stringify(stored))?.game.players.map((player) => player.removed)).toEqual([[], []]);
+  });
 });

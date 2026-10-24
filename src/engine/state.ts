@@ -14,6 +14,7 @@ export type PlayerState = {
   hand: Card[];
   played: Card[];
   discard: Card[];
+  removed: Card[];
   blockades: BlockadeId[];
   finishedOrder: number | null;
 };

@@ -40,7 +40,7 @@ export const createGame = ({ board, playerCount, seed }: GameConfig): GameState 
     const deck = STARTER_TYPES.map((type) => ({ id: state.nextCardId++, type }));
     const shuffled = shuffle(deck, state.rng);
     state.rng = shuffled.state;
-    state.players.push({ drawPile: shuffled.items, hand: [], played: [], discard: [], blockades: [], finishedOrder: null });
+    state.players.push({ drawPile: shuffled.items, hand: [], played: [], discard: [], removed: [], blockades: [], finishedOrder: null });
     drawCards(state, [], owner, HAND_SIZE);
     const at = startSpaces.get(owner + 1);
     if (!at) throw new Error(`The board has no starting space ${owner + 1}`);

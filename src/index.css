@@ -1874,6 +1874,28 @@ h3 {
 
 .stack-button:disabled {
   cursor: default;
+.zone--draw {
+  position: relative;
+}
+
+.zone--removed {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 50%;
+  gap: 4px;
+  translate: -50% 0;
+}
+
+.zone--removed .row--small {
+  --card-w: 46px;
+  --card-h: 64px;
+}
+
+.zone--removed .zone__label {
+  font-size: 10px;
+  white-space: nowrap;
+}
+
 }
 
 .discard-dialog {
@@ -2013,6 +2035,39 @@ h3 {
   inset: 0;
   overflow: hidden;
   border-radius: calc(var(--w) * 0.08);
+.card__caption {
+  position: absolute;
+  top: calc(100% + 6px / var(--zoom, 1));
+  left: 50%;
+  display: none;
+  padding: 0.25em 0.7em;
+  border: 1px solid #b8862b;
+  border-radius: 0.35em;
+  background: linear-gradient(180deg, #fbf4e3, #e8d6ae);
+  color: #2a1a05;
+  font: 700 calc(15px / var(--zoom, 1)) / 1.15 var(--display);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  translate: -50% 0;
+  box-shadow: 0 3px 8px rgb(0 0 0 / 45%);
+}
+
+@media (hover: hover) {
+  .tray .row--large > .card:hover {
+    --raise: -60px;
+    --zoom: 1.7;
+  }
+
+  .tray .row--small:not(.stack) > .card:hover {
+    --raise: -56px;
+    --zoom: 2.4;
+  }
+
+  .tray .row:not(.stack) > .card:hover .card__caption {
+    display: block;
+  }
+}
+
   backface-visibility: hidden;
   box-shadow: 0 6px 14px rgb(0 0 0 / 40%);
 }

@@ -62,6 +62,7 @@ describe('action cards', () => {
     expect(rejection(drawn, { type: 'removeFromHand', cardIds: [explorer!.id, traveler!.id] })).toBe('Remove at most 1 card(s)');
     const after = run(drawn, { type: 'removeFromHand', cardIds: [traveler!.id] }).state;
     expect(types(after.box)).toEqual(['traveler']);
+    expect(types(after.players[0]!.removed)).toEqual(['traveler']);
     expect(types(after.players[0]!.played)).toEqual(['scientist']);
     expect(after.turn.pending).toBeNull();
   });
