@@ -9,7 +9,7 @@ const NEXT: Partial<Record<IntroPhase, [IntroPhase, number]>> = {
   presents: ['yass', 2200],
   yass: ['title', 1100],
   title: ['colour', 1400],
-  colour: ['menu', 3000],
+  colour: ['menu', 4300],
 };
 const SCALE = 1.8;
 

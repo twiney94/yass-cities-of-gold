@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef } from 'react';
 import type { IntroPhase } from './intro';
 
 const SIZE = 320;
-const DURATION = 2600;
+const DURATION = 4000;
 const GLOW = 0.03;
 const EMBER = 0.014;
 const CHAR = 0.06;

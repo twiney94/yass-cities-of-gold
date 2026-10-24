@@ -331,6 +331,15 @@ h3 {
   opacity: 0;
 }
 
+.cursor-trail {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
 .scene__shade {
   position: absolute;
   inset: 0;
@@ -421,16 +430,18 @@ h3 {
   background:
     radial-gradient(circle at 9px 50%, var(--nail)),
     radial-gradient(circle at calc(100% - 9px) 50%, var(--nail)),
-    linear-gradient(180deg, rgb(255 222 160 / 20%), transparent 45%, rgb(0 0 0 / 25%)),
+    linear-gradient(180deg, rgb(255 222 160 / 14%), transparent 45%, rgb(0 0 0 / 25%)),
     url('./ui/art/wood-grain.svg') var(--grain, 0 0) / 320px 80px,
-    #7b4b23;
+    #66391a;
   box-shadow:
     inset 0 1px 0 rgb(255 228 175 / 35%),
     inset 0 -2px 0 rgb(0 0 0 / 28%),
     0 4px 0 #3b220f,
     0 10px 18px rgb(0 0 0 / 45%);
-  color: #fdf0d2;
-  text-shadow: 0 1px 1px rgb(0 0 0 / 65%);
+  color: #fff6e2;
+  text-shadow:
+    0 1px 0 rgb(40 20 6 / 90%),
+    0 0 6px rgb(30 14 4 / 85%);
   transition:
     translate 150ms ease,
     filter 150ms ease,
@@ -667,13 +678,14 @@ h3 {
 }
 
 .mode__text strong {
-  font: 700 18px/1.15 var(--display);
+  font: 700 19px/1.15 var(--display);
   letter-spacing: 0.04em;
+  color: #ffe39a;
 }
 
 .mode__text .muted {
   font-size: 13px;
-  color: #ead3a6;
+  color: #f7e8c8;
 }
 
 .menu__links {

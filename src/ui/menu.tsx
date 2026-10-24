@@ -2,6 +2,7 @@ import { type CSSProperties, useRef, useState } from 'react';
 import type { BotLevel } from '../bot/bot';
 import { type Difficulty, mapCode } from '../gen/code';
 import { BurnVeil } from './BurnVeil';
+import { CursorTrail } from './CursorTrail';
 import { LanguageSwitch } from './LanguageSwitch';
 import { SoundSwitch } from './SoundSwitch';
 import { Logo } from './Logo';
@@ -155,6 +156,7 @@ export function TitleScreen({ save, onMode, onContinue }: TitleProps) {
       </div>
       {info === 'rules' && <RulesDialog onClose={() => setInfo(null)} />}
       {info === 'about' && <AboutDialog onClose={() => setInfo(null)} />}
+      <CursorTrail />
     </div>
   );
 }
@@ -345,6 +347,7 @@ export function SetupScreen({ mode, onBack, onStart }: SetupProps) {
           </div>
         </div>
       )}
+      <CursorTrail />
     </div>
   );
 }
