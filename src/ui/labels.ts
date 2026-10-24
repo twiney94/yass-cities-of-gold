@@ -22,6 +22,18 @@ export type PlayerColor = keyof typeof PLAYER_COLORS;
 
 export const playerLook = (color: PlayerColor, m: Messages): PlayerLook => ({ name: m.colors[color], hex: PLAYER_COLORS[color] });
 
+// Colours stay unique: whoever already had the chosen colour moves on to the next one nobody uses.
+export const recolor = <T extends { color: PlayerColor }>(seats: T[], index: number, color: PlayerColor): T[] => {
+  const next = seats.map((seat, i) => (i === index ? { ...seat, color } : seat));
+  const clash = next.findIndex((seat, i) => i !== index && seat.color === color);
+  if (clash === -1) return next;
+  const order = Object.keys(PLAYER_COLORS) as PlayerColor[];
+  const from = order.indexOf(color);
+  const free = [...order.slice(from + 1), ...order.slice(0, from)].find((other) => next.every((seat) => seat.color !== other))!;
+  next[clash] = { ...next[clash], color: free };
+  return next;
+};
+
 export const turnHint = (m: Messages, game: GameState, intents: Intents, selectedCount: number, waiting: string | null) => {
   const { turn } = game;
   if (waiting) return waiting;

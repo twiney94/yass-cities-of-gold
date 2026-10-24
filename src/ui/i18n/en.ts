@@ -77,7 +77,6 @@ export const en = {
     bot: 'Bot',
     changeColor: (name: string) => `Change ${name}'s colour`,
     colorOf: (name: string) => `${name}'s colour`,
-    taken: (name: string) => `${name} (taken)`,
     playedBy: (name: string) => `${name} is played by`,
     botStrength: (name: string) => `${name} bot strength`,
     passNote: 'Pass the device between turns; your hand stays hidden until you tap.',

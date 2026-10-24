@@ -21,7 +21,7 @@ import { cx } from './cx';
 import { type Messages, useMessages } from './i18n';
 import { AboutDialog, RulesDialog } from './info';
 import { useIntro } from './intro';
-import { PLAYER_COLORS, type PlayerColor } from './labels';
+import { PLAYER_COLORS, type PlayerColor, recolor } from './labels';
 import { type GameMap, generateInWorker, mapTitle, parseMapCode, randomSeed, standinMap } from './maps';
 import type { SavedGame } from './save';
 import type { Seat } from './store';
@@ -345,25 +345,21 @@ export function SetupScreen({ mode, onBack, onStart }: SetupProps) {
                   </span>
                   {palette === i && (
                     <span className="palette" role="radiogroup" aria-label={m.menu.colorOf(name)}>
-                      {COLORS.map((color) => {
-                        const taken = seats.some((other, j) => j !== i && other.color === color);
-                        return (
-                          <button
-                            key={color}
-                            type="button"
-                            role="radio"
-                            aria-checked={seat.color === color}
-                            aria-label={taken ? m.menu.taken(m.colors[color]) : m.colors[color]}
-                            disabled={taken}
-                            className="swatch"
-                            style={{ background: PLAYER_COLORS[color] }}
-                            onClick={() => {
-                              setSeat(i, { ...seat, color });
-                              setPalette(null);
-                            }}
-                          />
-                        );
-                      })}
+                      {COLORS.map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          role="radio"
+                          aria-checked={seat.color === color}
+                          aria-label={m.colors[color]}
+                          className="swatch"
+                          style={{ background: PLAYER_COLORS[color] }}
+                          onClick={() => {
+                            setSeats((current) => recolor(current, i, color));
+                            setPalette(null);
+                          }}
+                        />
+                      ))}
                     </span>
                   )}
                 </li>

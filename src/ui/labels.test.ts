@@ -4,7 +4,7 @@ import { at, trackBoard } from '../engine/testing/boards';
 import { newGame } from '../engine/testing/fixtures';
 import { en } from './i18n/en';
 import { fr } from './i18n/fr';
-import { describeEvents, logText } from './labels';
+import { describeEvents, logText, recolor } from './labels';
 
 const players = [
   { name: 'Red', hex: '#d9483b' },
@@ -35,5 +35,21 @@ describe('logText', () => {
 
     expect(logText(entry, en, players, 'Map')).toBe('Blue moved 2 spaces');
     expect(logText(entry, fr, [players[0]!, { ...players[1]!, name: 'Bleu' }], 'Carte')).toBe('Bleu avance de 2 cases');
+  });
+});
+
+describe('recolor', () => {
+  it('changes only the chosen seat when the colour is free', () => {
+    expect(recolor([{ color: 'red' }, { color: 'blue' }], 1, 'yellow')).toEqual([{ color: 'red' }, { color: 'yellow' }]);
+  });
+
+  it('moves the seat that had the colour on to the next colour nobody uses', () => {
+    const seats = [{ color: 'red' as const }, { color: 'blue' as const }, { color: 'yellow' as const }];
+    expect(recolor(seats, 2, 'red')).toEqual([{ color: 'white' }, { color: 'blue' }, { color: 'red' }]);
+  });
+
+  it('wraps round the palette and can hand back the chooser’s old colour', () => {
+    const seats = [{ color: 'black' as const }, { color: 'red' as const }];
+    expect(recolor(seats, 1, 'black')).toEqual([{ color: 'red' }, { color: 'black' }]);
   });
 });

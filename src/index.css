@@ -1383,11 +1383,6 @@ h3 {
     0 0 0 4px var(--gold);
 }
 
-.swatch:disabled {
-  opacity: 0.2;
-  cursor: not-allowed;
-}
-
 .menu__footer {
   position: relative;
   z-index: 1;
@@ -1478,6 +1473,10 @@ h3 {
 @media (prefers-reduced-motion: no-preference) {
   .modes {
     animation: menu-in 500ms ease-out 850ms both;
+  }
+
+  .menu__links {
+    animation: menu-in 500ms ease-out 1000ms both;
   }
 
   .menu--setup .panel {

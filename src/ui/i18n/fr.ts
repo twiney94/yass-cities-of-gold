@@ -77,7 +77,6 @@ export const fr: Messages = {
     bot: 'Bot',
     changeColor: (name: string) => `Changer la couleur ${name}`,
     colorOf: (name: string) => `Couleur du joueur ${name}`,
-    taken: (name: string) => `${name} (déjà prise)`,
     playedBy: (name: string) => `Qui joue ${name}`,
     botStrength: (name: string) => `Force du bot ${name}`,
     passNote: "Passez l'appareil à chaque tour ; votre main reste cachée jusqu'à ce que vous la révéliez.",
