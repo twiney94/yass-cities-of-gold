@@ -1,9 +1,11 @@
 import { type CSSProperties, useRef, useState } from 'react';
 import type { BotLevel } from '../bot/bot';
 import { type Difficulty, mapCode } from '../gen/code';
+import { BurnVeil } from './BurnVeil';
 import { LanguageSwitch } from './LanguageSwitch';
 import { SoundSwitch } from './SoundSwitch';
 import { Logo } from './Logo';
+import { MenuScene } from './MenuScene';
 import { PAWN_BAND, PAWN_PATH, PAWN_VIEWBOX } from './art/pawn';
 import { type Option, Segmented } from './Segmented';
 import { cx } from './cx';
@@ -90,7 +92,8 @@ export function TitleScreen({ save, onMode, onContinue }: TitleProps) {
   const intro = useIntro(yassRef);
   return (
     <div className={cx('menu', intro.withIntro && 'with-intro', intro.withIntro && `is-${intro.phase}`)} style={intro.style}>
-      {intro.withIntro && <div className="intro-veil" aria-hidden="true" />}
+      <MenuScene />
+      {intro.withIntro && <BurnVeil phase={intro.phase} />}
       {intro.phase === 'gate' && (
         <button type="button" className="intro-gate" onClick={intro.begin} autoFocus>
           <span>{m.intro.begin}</span>
@@ -111,7 +114,7 @@ export function TitleScreen({ save, onMode, onContinue }: TitleProps) {
         </h1>
         <nav className="modes" aria-label={m.menu.modes}>
           {save && (
-            <button type="button" className="mode mode--continue" onClick={onContinue}>
+            <button type="button" className="mode mode--continue wood" onClick={onContinue}>
               <span className="mode__icon">
                 <Meeple />
               </span>
@@ -121,7 +124,7 @@ export function TitleScreen({ save, onMode, onContinue }: TitleProps) {
               </span>
             </button>
           )}
-          <button type="button" className="mode" onClick={() => onMode('solo')}>
+          <button type="button" className="mode wood" onClick={() => onMode('solo')}>
             <span className="mode__icon">
               <Meeple />
             </span>
@@ -130,7 +133,7 @@ export function TitleScreen({ save, onMode, onContinue }: TitleProps) {
               <span className="muted">{m.menu.soloBlurb}</span>
             </span>
           </button>
-          <button type="button" className="mode" onClick={() => onMode('passAndPlay')}>
+          <button type="button" className="mode wood" onClick={() => onMode('passAndPlay')}>
             <span className="mode__icon mode__icon--pair">
               <Meeple />
               <Meeple />
@@ -142,10 +145,10 @@ export function TitleScreen({ save, onMode, onContinue }: TitleProps) {
           </button>
         </nav>
         <div className="menu__links">
-          <button type="button" className="btn btn--ghost" onClick={() => setInfo('rules')}>
+          <button type="button" className="btn wood" onClick={() => setInfo('rules')}>
             {m.menu.howToPlay}
           </button>
-          <button type="button" className="btn btn--ghost" onClick={() => setInfo('about')}>
+          <button type="button" className="btn wood" onClick={() => setInfo('about')}>
             {m.menu.about}
           </button>
         </div>

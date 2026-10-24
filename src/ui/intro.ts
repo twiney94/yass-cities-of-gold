@@ -9,11 +9,11 @@ const NEXT: Partial<Record<IntroPhase, [IntroPhase, number]>> = {
   presents: ['yass', 2200],
   yass: ['title', 1100],
   title: ['colour', 1400],
-  colour: ['menu', 2600],
+  colour: ['menu', 3000],
 };
 const SCALE = 1.8;
 
-type Frame = { presents: number; alone: number; y: number; logo: number; scale: number };
+type Frame = { presents: number; alone: number; y: number; logoX: number; logoY: number; scale: number };
 
 let played = false;
 
@@ -24,7 +24,7 @@ const firstPhase = (): IntroPhase => {
 
 // The logo is held at the middle of the screen until the menu comes in. "Yass presents…" is centred on
 // top of it, then "Yass'" glides back to its place above the title. Positions come from the untransformed
-// logo, measured once its fonts have loaded.
+// logo, measured once its fonts have loaded; "Yass'" rides on the logo's offset, so it is taken back out.
 const measure = (yass: HTMLElement): Frame => {
   const box = yass.getBoundingClientRect();
   const logo = yass.closest('h1')!.getBoundingClientRect();
@@ -33,11 +33,13 @@ const measure = (yass: HTMLElement): Frame => {
   const presents = yass.querySelector('.logo__presents')?.getBoundingClientRect().right ?? box.right;
   const scale = Math.min(SCALE, (window.innerWidth * 0.86) / (presents - box.left));
   const center = window.innerWidth / 2;
+  const logoX = center - (logo.left + logo.width / 2);
   return {
-    presents: center - ((presents - box.left) * scale) / 2 - box.left,
-    alone: center - ((name.right - box.left + apostrophe) * scale) / 2 - box.left,
+    presents: center - ((presents - box.left) * scale) / 2 - box.left - logoX,
+    alone: center - ((name.right - box.left + apostrophe) * scale) / 2 - box.left - logoX,
     y: logo.top + logo.height / 2 - (box.top + box.height / 2),
-    logo: window.innerHeight / 2 - (logo.top + logo.height / 2),
+    logoX,
+    logoY: window.innerHeight / 2 - (logo.top + logo.height / 2),
     scale,
   };
 };
@@ -80,7 +82,8 @@ export const useIntro = (yass: RefObject<HTMLElement | null>) => {
     ? ({
         '--intro-x': `${centred ? frame.presents : frame.alone}px`,
         '--intro-y': `${frame.y}px`,
-        '--intro-logo-y': `${frame.logo}px`,
+        '--intro-logo-x': `${frame.logoX}px`,
+        '--intro-logo-y': `${frame.logoY}px`,
         '--intro-scale': frame.scale,
       } as CSSProperties)
     : undefined;
