@@ -86,7 +86,49 @@ export const en = {
     generateFailed: 'The map could not be generated. Try another code.',
     charting: 'Charting the trail…',
     chartingDetail: 'Generating the map and letting bots playtest it.',
+    howToPlay: 'How to play',
+    about: 'About',
+    continue: 'Continue',
+    continueBlurb: (map: string, players: number) => `${map} · ${players} players`,
   },
+  about: {
+    title: 'About',
+    version: (version: string) => `Version ${version}`,
+    madeBy: 'A game by Yass.',
+    characters: 'Characters',
+    charactersCredit: 'KayKit Adventurers by Kay Lousberg (CC0)',
+    fonts: 'Fonts',
+    fontsCredit: 'Cinzel and Cinzel Decorative by Natanael Gama (SIL Open Font License)',
+    builtWith: 'Built with',
+  },
+  rules: {
+    back: 'Back',
+    next: 'Next',
+    done: 'Got it',
+    pages: [
+      {
+        title: 'The race',
+        body: 'Lead your explorer from the start to the City of Gold at the far end of the trail. The first to reach a gold finishing space starts the last round, so everyone plays the same number of turns. If several explorers arrive, the one holding the most blockades wins, then the highest blockade, then whoever arrived first.',
+      },
+      {
+        title: 'Moving',
+        body: 'Play cards from your hand to move to a neighbouring space. Each space shows its cost: machetes in the jungle, paddles on water, coins in villages. Pay it with one card of that kind with at least that power; what is left on the card can carry you across more spaces of its kind. Multicoloured cards count as any kind.',
+      },
+      {
+        title: 'Rubble, camps and blockades',
+        body: 'Rubble (grey) asks for as many cards as it shows, of any kind; they go to your discard pile. Base camps (red) work the same way, but those cards leave the game, a handy way to thin your deck. Mountains block the way. Blockades seal the border between two regions: pay their cost to break through, and keep the blockade as a tie-breaker.',
+      },
+      {
+        title: 'The market',
+        body: 'Cards also work as money: coin cards for their value, any other card for ½. You may buy one card a turn from the market board; it goes to your discard pile, and you cannot move after buying. The reserve opens as soon as a pile on the board sells out, and a pile bought from the reserve moves onto the board.',
+      },
+      {
+        title: 'Actions and the end of a turn',
+        body: 'Purple cards have an effect instead of movement: draw cards, take a free card, or move one space for nothing. Cards marked ✕ leave the game once played, but not when spent as money. When you end your turn, played cards go to your discard pile, you may discard cards left in your hand, then you draw back up to 4. An empty draw pile is refilled by shuffling your discard pile.',
+      },
+    ],
+  },
+  sound: { on: 'Sound on', off: 'Sound off' },
   dice: {
     title: 'Who goes first?',
     tie: 'A tie! The tied players roll again.',
@@ -125,6 +167,7 @@ export const en = {
     endTurn: 'End turn',
     endTurnDiscard: (count: number) => `End turn · discard ${count}`,
     notYourTurn: (name: string) => `Not your turn, ${name} is playing`,
+    passTo: (name: string) => `Pass to ${name}`,
     seeDiscard: 'See your discard pile',
     discardTitle: (count: number) => `Discard pile · ${plural(count, 'card')}`,
     rejected: 'That move is not allowed.',
@@ -148,6 +191,7 @@ export const en = {
     botPlaying: (name: string) => `${name} (bot) is playing…`,
     outOfCards: 'No cards left. Ending your turn…',
     turnOver: 'Turn over…',
+    reviewHand: (name: string) => `Your next hand is ready. Pass the device to ${name} when you're done.`,
   },
   log: {
     newGame: (map: string) => `New game on ${map}`,

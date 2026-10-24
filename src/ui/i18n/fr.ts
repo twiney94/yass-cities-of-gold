@@ -86,7 +86,49 @@ export const fr: Messages = {
     generateFailed: 'Impossible de générer la carte. Essayez un autre code.',
     charting: 'Tracé de la piste…',
     chartingDetail: "Génération de la carte et parties d'essai des bots.",
+    howToPlay: 'Comment jouer',
+    about: 'À propos',
+    continue: 'Reprendre',
+    continueBlurb: (map: string, players: number) => `${map} · ${players} joueurs`,
   },
+  about: {
+    title: 'À propos',
+    version: (version: string) => `Version ${version}`,
+    madeBy: 'Un jeu de Yass.',
+    characters: 'Personnages',
+    charactersCredit: 'KayKit Adventurers par Kay Lousberg (CC0)',
+    fonts: 'Polices',
+    fontsCredit: 'Cinzel et Cinzel Decorative par Natanael Gama (SIL Open Font License)',
+    builtWith: 'Réalisé avec',
+  },
+  rules: {
+    back: 'Retour',
+    next: 'Suivant',
+    done: "C'est compris",
+    pages: [
+      {
+        title: 'La course',
+        body: "Menez votre explorateur du départ jusqu'à la Cité d'Or, au bout de la piste. Le premier à atteindre une case d'arrivée dorée lance le dernier tour : tout le monde joue le même nombre de tours. Si plusieurs explorateurs arrivent, celui qui détient le plus de barrages gagne, puis le barrage le plus élevé, puis le premier arrivé.",
+      },
+      {
+        title: 'Avancer',
+        body: "Jouez des cartes de votre main pour avancer sur une case voisine. Chaque case affiche son coût : des machettes dans la jungle, des pagaies sur l'eau, des pièces dans les villages. Payez-le avec une carte de ce type d'une puissance au moins égale ; ce qui reste sur la carte peut vous faire avancer sur d'autres cases du même type. Les cartes multicolores comptent pour n'importe quel type.",
+      },
+      {
+        title: 'Décombres, camps et barrages',
+        body: "Les décombres (gris) demandent autant de cartes qu'ils en montrent, de n'importe quel type ; elles vont dans votre défausse. Les camps de base (rouges) fonctionnent pareil, mais ces cartes quittent la partie : pratique pour alléger votre paquet. Les montagnes sont infranchissables. Les barrages ferment la frontière entre deux régions : payez leur coût pour passer, et gardez le barrage pour départager les égalités.",
+      },
+      {
+        title: 'Le marché',
+        body: "Les cartes servent aussi de monnaie : les cartes pièce valent leur valeur, toutes les autres ½. Vous pouvez acheter une carte par tour au marché ; elle va dans votre défausse, et vous ne pouvez plus avancer après un achat. La réserve s'ouvre dès qu'une pile du marché est épuisée, et une pile achetée dans la réserve rejoint le marché.",
+      },
+      {
+        title: 'Actions et fin de tour',
+        body: "Les cartes violettes ont un effet à la place du mouvement : piocher, prendre une carte gratuite ou avancer d'une case sans payer. Les cartes marquées ✕ quittent la partie une fois jouées, mais pas quand elles servent de monnaie. À la fin de votre tour, les cartes jouées vont dans votre défausse, vous pouvez défausser des cartes de votre main, puis vous piochez jusqu'à en avoir 4. Quand la pioche est vide, on mélange la défausse pour la reformer.",
+      },
+    ],
+  },
+  sound: { on: 'Son activé', off: 'Son coupé' },
   dice: {
     title: 'Qui commence ?',
     tie: 'Égalité ! Les ex æquo relancent.',
@@ -125,6 +167,7 @@ export const fr: Messages = {
     endTurn: 'Fin du tour',
     endTurnDiscard: (count: number) => `Fin du tour · défausser ${count}`,
     notYourTurn: (name: string) => `Pas votre tour, ${name} joue`,
+    passTo: (name: string) => `Passer à ${name}`,
     seeDiscard: 'Voir votre défausse',
     discardTitle: (count: number) => `Défausse · ${plural(count, 'carte')}`,
     rejected: "Ce coup n'est pas autorisé.",
@@ -149,6 +192,7 @@ export const fr: Messages = {
     botPlaying: (name: string) => `${name} (bot) joue…`,
     outOfCards: 'Plus de cartes en main. Fin de votre tour…',
     turnOver: 'Tour terminé…',
+    reviewHand: (name: string) => `Votre prochaine main est prête. Passez l'appareil à ${name} quand vous avez fini.`,
   },
   log: {
     newGame: (map: string) => `Nouvelle partie : ${map}`,

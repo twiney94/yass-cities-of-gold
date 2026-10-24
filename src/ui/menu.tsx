@@ -2,13 +2,16 @@ import { type CSSProperties, useState } from 'react';
 import type { BotLevel } from '../bot/bot';
 import { type Difficulty, mapCode } from '../gen/code';
 import { LanguageSwitch } from './LanguageSwitch';
+import { SoundSwitch } from './SoundSwitch';
 import { Logo } from './Logo';
 import { PAWN_BAND, PAWN_PATH, PAWN_VIEWBOX } from './art/pawn';
 import { type Option, Segmented } from './Segmented';
 import { cx } from './cx';
 import { type Messages, useMessages } from './i18n';
+import { AboutDialog, RulesDialog } from './info';
 import { PLAYER_COLORS, type PlayerColor } from './labels';
-import { type GameMap, generateInWorker, parseMapCode, randomSeed, standinMap } from './maps';
+import { type GameMap, generateInWorker, mapTitle, parseMapCode, randomSeed, standinMap } from './maps';
+import type { SavedGame } from './save';
 import type { Seat } from './store';
 
 export type Mode = 'solo' | 'passAndPlay';
@@ -37,6 +40,37 @@ const openingSeats = (mode: Mode): Seat[] => {
   return [you, newSeat(mode, [you])];
 };
 
+type Setup = { seats: Seat[]; choice: MapChoice };
+const setupKey = (mode: Mode) => `yass-cities-of-gold.setup.${mode}`;
+
+const validSeat = (seat: Seat, index: number, mode: Mode) =>
+  seat.color in PLAYER_COLORS &&
+  (mode === 'passAndPlay' ? seat.kind === 'human' || seat.kind === 'bot' : seat.kind === (index === 0 ? 'human' : 'bot')) &&
+  (seat.kind === 'human' || LEVELS.includes(seat.level));
+
+// The last setup of each mode comes back next time, as long as it still makes sense.
+const readSetup = (mode: Mode): Setup | null => {
+  try {
+    const setup = JSON.parse(localStorage.getItem(setupKey(mode)) ?? 'null') as Setup | null;
+    const seats = setup?.seats;
+    if (!setup || !Array.isArray(seats) || seats.length < 2 || seats.length > 4) return null;
+    if (!seats.every((seat, i) => validSeat(seat, i, mode))) return null;
+    if (new Set(seats.map((seat) => seat.color)).size !== seats.length) return null;
+    if (!MAPS.some((map) => map.value === setup.choice)) return null;
+    return setup;
+  } catch {
+    return null;
+  }
+};
+
+const saveSetup = (mode: Mode, setup: Setup) => {
+  try {
+    localStorage.setItem(setupKey(mode), JSON.stringify(setup));
+  } catch (error) {
+    console.warn('The setup could not be saved', error);
+  }
+};
+
 function Meeple() {
   return (
     <svg className="meeple" viewBox={PAWN_VIEWBOX} aria-hidden="true">
@@ -46,17 +80,34 @@ function Meeple() {
   );
 }
 
-export function TitleScreen({ onMode }: { onMode: (mode: Mode) => void }) {
+type TitleProps = { save: SavedGame | null; onMode: (mode: Mode) => void; onContinue: () => void };
+
+export function TitleScreen({ save, onMode, onContinue }: TitleProps) {
   const m = useMessages();
+  const [info, setInfo] = useState<'rules' | 'about' | null>(null);
   return (
     <div className="menu">
-      <LanguageSwitch className="menu__language" />
+      <div className="menu__corner">
+        <SoundSwitch />
+        <LanguageSwitch />
+      </div>
       <div className="menu__title">
         <h1>
           <Logo />
         </h1>
         <p className="menu__tagline muted">{m.menu.tagline}</p>
         <nav className="modes" aria-label={m.menu.modes}>
+          {save && (
+            <button type="button" className="mode mode--continue" onClick={onContinue}>
+              <span className="mode__icon">
+                <Meeple />
+              </span>
+              <span className="mode__text">
+                <strong>{m.menu.continue}</strong>
+                <span className="muted">{m.menu.continueBlurb(mapTitle(save.map, m), save.seats.length)}</span>
+              </span>
+            </button>
+          )}
           <button type="button" className="mode" onClick={() => onMode('solo')}>
             <span className="mode__icon">
               <Meeple />
@@ -77,7 +128,17 @@ export function TitleScreen({ onMode }: { onMode: (mode: Mode) => void }) {
             </span>
           </button>
         </nav>
+        <div className="menu__links">
+          <button type="button" className="btn btn--ghost" onClick={() => setInfo('rules')}>
+            {m.menu.howToPlay}
+          </button>
+          <button type="button" className="btn btn--ghost" onClick={() => setInfo('about')}>
+            {m.menu.about}
+          </button>
+        </div>
       </div>
+      {info === 'rules' && <RulesDialog onClose={() => setInfo(null)} />}
+      {info === 'about' && <AboutDialog onClose={() => setInfo(null)} />}
     </div>
   );
 }
@@ -86,10 +147,11 @@ type SetupProps = { mode: Mode; onBack: () => void; onStart: (seats: Seat[], map
 
 export function SetupScreen({ mode, onBack, onStart }: SetupProps) {
   const m = useMessages();
-  const [seats, setSeats] = useState(() => openingSeats(mode));
+  const [remembered] = useState(() => readSetup(mode));
+  const [seats, setSeats] = useState(() => remembered?.seats ?? openingSeats(mode));
   const [palette, setPalette] = useState<number | null>(null);
-  const [choice, setChoice] = useState<MapChoice>('medium');
-  const [code, setCode] = useState(() => mapCode('medium', randomSeed()));
+  const [choice, setChoice] = useState<MapChoice>(remembered?.choice ?? 'medium');
+  const [code, setCode] = useState(() => mapCode(choice === 'standin' ? 'medium' : choice, randomSeed()));
   const [generating, setGenerating] = useState(false);
   const [problem, setProblem] = useState(false);
 
@@ -118,6 +180,7 @@ export function SetupScreen({ mode, onBack, onStart }: SetupProps) {
   const parsed = choice === 'standin' ? null : parseMapCode(code);
 
   const start = async () => {
+    saveSetup(mode, { seats, choice });
     if (choice === 'standin') return onStart(seats, standinMap());
     if (!parsed) return;
     setGenerating(true);

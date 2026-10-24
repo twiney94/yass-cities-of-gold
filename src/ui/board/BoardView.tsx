@@ -4,6 +4,7 @@ import type { BlockadeId } from '../../engine/board';
 import type { HexKey } from '../../engine/hex';
 import type { TargetKey } from '../../engine/moves';
 import type { GameState, PieceId } from '../../engine/state';
+import { PAWN_PATH, PAWN_VIEWBOX } from '../art/pawn';
 import { useMessages } from '../i18n';
 import type { Animation } from '../store';
 import { BoardRenderer, type Insets } from './BoardRenderer';
@@ -110,11 +111,17 @@ export function BoardView(props: Props) {
         <button type="button" className="btn btn--icon" aria-label={m.game.zoomOut} onClick={() => rendererRef.current?.zoomBy(1 / 1.3)}>
           −
         </button>
-        <button type="button" className="btn" onClick={() => rendererRef.current?.showOverview()}>
-          {m.game.wholeMap}
+        <button type="button" className="btn" aria-label={m.game.wholeMap} onClick={() => rendererRef.current?.showOverview()}>
+          <svg className="board__icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+          </svg>
+          <span className="board__label">{m.game.wholeMap}</span>
         </button>
-        <button type="button" className="btn" onClick={() => rendererRef.current?.focusPiece(ownPiece ?? cameraPiece)}>
-          {m.game.myPawn}
+        <button type="button" className="btn" aria-label={m.game.myPawn} onClick={() => rendererRef.current?.focusPiece(ownPiece ?? cameraPiece)}>
+          <svg className="board__icon" viewBox={PAWN_VIEWBOX} aria-hidden="true">
+            <path d={PAWN_PATH} fill="currentColor" />
+          </svg>
+          <span className="board__label">{m.game.myPawn}</span>
         </button>
       </div>
     </div>

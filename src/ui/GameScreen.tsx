@@ -13,7 +13,8 @@ import { PLAYER_COLORS, logText, playerLook, turnHint } from './labels';
 import { mapSummary, mapTitle } from './maps';
 import { Market } from './market';
 import { EventLog, GameOver, HudHead, PassScreen, PlayersPanel, Toast, TurnActions, TurnPanel } from './panels';
-import { useGame } from './store';
+import { playSound, soundsFor } from './sound';
+import { needsPassScreen, useGame } from './store';
 import { Tray } from './tray';
 
 const HANDOFF_DELAY = 1500;
@@ -72,6 +73,7 @@ export function GameScreen() {
   const { prepare, quit, toggleCard, choosePiece, perform, finishHandoff, reveal, clearError } = useGame.getState();
 
   const settled = !handoff && !covered && game.status.kind !== 'over';
+  const passing = handoff && seats[viewer]?.kind === 'human' && viewer !== game.turn.player && needsPassScreen(seats, game.turn.player);
   const seat = seats[game.turn.player]!;
   const interactive = settled && seat.kind === 'human' && viewer === game.turn.player;
   const botLevel = settled && seat.kind === 'bot' ? seat.level : null;
@@ -111,13 +113,14 @@ export function GameScreen() {
     const before = snapshot.current;
     snapshot.current = null;
     if (before && fxLayer.current) animateCards(before, animation.events, fxLayer.current);
+    for (const { sound, at } of soundsFor(animation.events, HOP_TIME)) playSound(sound, at);
   }, [animation]);
 
   useEffect(() => {
-    if (!handoff) return;
+    if (!handoff || passing) return;
     const timer = window.setTimeout(() => animated(finishHandoff), HANDOFF_DELAY);
     return () => window.clearTimeout(timer);
-  }, [handoff, finishHandoff, animated]);
+  }, [handoff, passing, finishHandoff, animated]);
 
   useEffect(() => {
     if (!botLevel) return;
@@ -135,7 +138,9 @@ export function GameScreen() {
   }, [outOfCards, animation, act]);
 
   const turnPlayer = players[game.turn.player]!;
-  const waiting = botLevel
+  const waiting = passing
+    ? m.hints.reviewHand(turnPlayer.name)
+    : botLevel
     ? m.hints.botPlaying(turnPlayer.name)
     : outOfCards
       ? m.hints.outOfCards
@@ -194,7 +199,7 @@ export function GameScreen() {
         <HudHead mapTitle={title} onQuit={quit} />
         <TurnPanel
           game={game}
-          player={turnPlayer}
+          player={passing ? players[viewer]! : turnPlayer}
           hint={turnHint(m, game, intents, selectedCount, waiting)}
           choosePiece={choosingPiece}
           botPlayed={botPlayed}
@@ -214,7 +219,9 @@ export function GameScreen() {
             intents={intents}
             selectedCount={selectedCount}
             locked={locked}
-            waitingFor={interactive || outOfCards ? null : turnPlayer.name}
+            waitingFor={interactive || outOfCards || passing ? null : turnPlayer.name}
+            passTo={passing ? turnPlayer.name : null}
+            onPass={() => animated(finishHandoff)}
             onPerform={act}
             onMarket={() => setMarketOpen(true)}
           />

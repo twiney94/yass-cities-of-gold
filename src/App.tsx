@@ -1,7 +1,8 @@
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { DiceRoll } from './ui/DiceRoll';
 import type { GameMap } from './ui/maps';
 import { type Mode, SetupScreen, TitleScreen } from './ui/menu';
+import { loadSave } from './ui/save';
 import { type Seat, useGame } from './ui/store';
 
 const loadGameScreen = () => import('./ui/GameScreen');
@@ -14,6 +15,8 @@ export default function App() {
   const roll = useGame((s) => s.roll);
   const prepare = useGame((s) => s.prepare);
   const begin = useGame((s) => s.begin);
+  const resume = useGame((s) => s.resume);
+  const save = useMemo(() => (playing || roll ? null : loadSave()), [playing, roll]);
   const [screen, setScreen] = useState<Screen>({ kind: 'title' });
 
   useEffect(() => {
@@ -36,7 +39,7 @@ export default function App() {
   return (
     <>
       {screen.kind === 'title' ? (
-        <TitleScreen onMode={(mode) => setScreen({ kind: 'setup', mode })} />
+        <TitleScreen save={save} onMode={(mode) => setScreen({ kind: 'setup', mode })} onContinue={() => save && resume(save)} />
       ) : (
         <SetupScreen key={screen.mode} mode={screen.mode} onBack={() => setScreen({ kind: 'title' })} onStart={start} />
       )}

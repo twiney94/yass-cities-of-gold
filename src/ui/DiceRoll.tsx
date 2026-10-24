@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { cx } from './cx';
 import { useMessages } from './i18n';
 import { PLAYER_COLORS } from './labels';
+import { playSound } from './sound';
 import type { PendingRoll } from './store';
 
 const ROLL_TIME = 900;
@@ -40,6 +41,7 @@ export function DiceRoll({ roll, onDone }: { roll: PendingRoll; onDone: () => vo
 
   useEffect(() => {
     if (step.rolling) {
+      playSound('dice');
       const spin = window.setInterval(() => setTumble((t) => t + 1), TUMBLE_TIME);
       const land = window.setTimeout(() => setStep((s) => ({ ...s, rolling: false })), ROLL_TIME);
       return () => {

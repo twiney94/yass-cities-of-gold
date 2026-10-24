@@ -1,12 +1,14 @@
-import { type CSSProperties, useEffect } from 'react';
+import { type CSSProperties, useEffect, useState } from 'react';
 import type { Action } from '../engine/actions';
 import { rankFinishers } from '../engine/rules';
 import type { Card, GameState } from '../engine/state';
 import { CardView } from './CardView';
 import { LanguageSwitch } from './LanguageSwitch';
+import { SoundSwitch } from './SoundSwitch';
 import { Logo } from './Logo';
 import { cx } from './cx';
 import { useMessages } from './i18n';
+import { RulesDialog } from './info';
 import type { Intents } from './intents';
 import type { PlayerLook } from './labels';
 import type { Seat } from './store';
@@ -20,16 +22,22 @@ const seatStyle = (player: PlayerLook) => ({ '--seat': player.hex }) as CSSPrope
 
 export function HudHead({ mapTitle, onQuit }: { mapTitle: string; onQuit: () => void }) {
   const m = useMessages();
+  const [rules, setRules] = useState(false);
   return (
     <header className="hud__block hud__head">
       <Logo small />
       <span className="hud__controls">
+        <button type="button" className="btn btn--small btn--round" aria-label={m.menu.howToPlay} title={m.menu.howToPlay} onClick={() => setRules(true)}>
+          ?
+        </button>
+        <SoundSwitch />
         <LanguageSwitch />
         <button type="button" className="btn btn--small" onClick={onQuit}>
           {m.game.quit}
         </button>
       </span>
       <span className="hud__map">{mapTitle}</span>
+      {rules && <RulesDialog onClose={() => setRules(false)} />}
     </header>
   );
 }
@@ -89,11 +97,14 @@ type TurnActionsProps = {
   selectedCount: number;
   locked: boolean;
   waitingFor: string | null;
+  passTo: string | null;
+  onPass: () => void;
   onPerform: (actions: Action[]) => void;
   onMarket: () => void;
 };
 
-export function TurnActions({ game, intents, selectedCount, locked, waitingFor, onPerform, onMarket }: TurnActionsProps) {
+export function TurnActions(props: TurnActionsProps) {
+  const { game, intents, selectedCount, locked, waitingFor, passTo, onPass, onPerform, onMarket } = props;
   const m = useMessages();
   const { turn } = game;
   const { play, removal } = intents;
@@ -114,11 +125,19 @@ export function TurnActions({ game, intents, selectedCount, locked, waitingFor, 
           {selectedCount > 0 ? m.game.remove(selectedCount) : m.game.keepAll}
         </button>
       )}
-      <span className={cx('turn-actions__end', tip && 'has-tip')} data-tip={tip}>
-        <button type="button" className="btn btn--chunky btn--primary" disabled={!endTurn} onClick={() => endTurn && onPerform([endTurn])}>
-          {endTurn && selectedCount > 0 ? m.game.endTurnDiscard(selectedCount) : m.game.endTurn}
-        </button>
-      </span>
+      {passTo ? (
+        <span className="turn-actions__end">
+          <button type="button" className="btn btn--chunky btn--primary" onClick={onPass}>
+            {m.game.passTo(passTo)}
+          </button>
+        </span>
+      ) : (
+        <span className={cx('turn-actions__end', tip && 'has-tip')} data-tip={tip}>
+          <button type="button" className="btn btn--chunky btn--primary" disabled={!endTurn} onClick={() => endTurn && onPerform([endTurn])}>
+            {endTurn && selectedCount > 0 ? m.game.endTurnDiscard(selectedCount) : m.game.endTurn}
+          </button>
+        </span>
+      )}
     </>
   );
 }
@@ -157,13 +176,25 @@ export function PassScreen({ player, onReveal }: { player: PlayerLook; onReveal:
 
 type GameOverProps = { game: GameState; players: readonly PlayerLook[]; onNewGame: () => void; onQuit: () => void };
 
+const COINS = Array.from({ length: 26 }, (_, i) => ({
+  '--x': `${(i * 37) % 100}%`,
+  '--delay': `${((i * 0.23) % 2.4).toFixed(2)}s`,
+  '--fall': `${2.6 + ((i * 7) % 10) / 10}s`,
+  '--size': `${10 + ((i * 5) % 9)}px`,
+})) as CSSProperties[];
+
 export function GameOver({ game, players, onNewGame, onQuit }: GameOverProps) {
   const m = useMessages();
   const ranking = rankFinishers(game);
   const winner = players[ranking[0]!]!;
   return (
     <div className="overlay">
-      <div className="overlay__panel">
+      <div className="confetti" aria-hidden="true">
+        {COINS.map((style, i) => (
+          <span key={i} style={style} />
+        ))}
+      </div>
+      <div className="overlay__panel game-over">
         <span className="dot dot--big" style={{ background: winner.hex }} />
         <h2>{m.game.winner(winner.name)}</h2>
         <ol className="ranking">

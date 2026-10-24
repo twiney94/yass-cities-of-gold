@@ -8,6 +8,7 @@ import { type TurnOrderRoll, d6, rollTurnOrder } from './dice';
 import type { Selection } from './intents';
 import { type LogEntry, type PlayerColor, describeEvents } from './labels';
 import type { GameMap } from './maps';
+import { type SavedGame, writeSave } from './save';
 
 export type Seat = { color: PlayerColor } & ({ kind: 'human' } | { kind: 'bot'; level: BotLevel });
 export type LogLine = { id: number; entry: LogEntry };
@@ -33,6 +34,7 @@ type GameStore = {
   error: string | null;
   prepare: (seats: Seat[], map: GameMap) => void;
   begin: () => void;
+  resume: (save: SavedGame) => void;
   newGame: (seats: Seat[], map: GameMap) => void;
   quit: () => void;
   toggleCard: (id: CardId) => void;
@@ -49,7 +51,7 @@ let nextId = 0;
 
 const lines = (entries: LogEntry[]): LogLine[] => entries.map((entry) => ({ id: nextId++, entry }));
 const animation = (events: GameEvent[]): Animation => ({ id: nextId++, events });
-const needsPassScreen = (seats: Seat[], player: number) =>
+export const needsPassScreen = (seats: Seat[], player: number) =>
   seats[player]?.kind === 'human' && seats.filter((seat) => seat.kind === 'human').length > 1;
 
 export const nextViewer = (seats: Seat[], player: number, viewer: number) =>
@@ -84,6 +86,25 @@ export const useGame = create<GameStore>((set, get) => ({
       roll.result.order.map((i) => roll.seats[i]!),
       roll.map,
     );
+  },
+
+  resume: (save) => {
+    const covered = needsPassScreen(save.seats, save.game.turn.player);
+    nextId = Math.max(nextId, ...save.log.map((line) => line.id + 1));
+    set({
+      roll: null,
+      game: save.game,
+      map: save.map,
+      seats: save.seats,
+      viewer: covered ? save.viewer : nextViewer(save.seats, save.game.turn.player, save.viewer),
+      selection: NO_SELECTION,
+      handoff: false,
+      covered,
+      animation: animation([]),
+      focusCue: covered ? 0 : 1,
+      log: save.log,
+      error: null,
+    });
   },
 
   newGame: (seats, map) => {
@@ -158,3 +179,19 @@ export const useGame = create<GameStore>((set, get) => ({
 
   clearError: () => set({ error: null }),
 }));
+
+// A game in progress is written to the browser shortly after each change, so a reload or a closed tab
+// can pick it back up; quitting or finishing clears it at once so the menu never offers it again.
+let pendingSave: ReturnType<typeof setTimeout> | undefined;
+useGame.subscribe((state, previous) => {
+  if (state.game === previous.game && state.viewer === previous.viewer) return;
+  clearTimeout(pendingSave);
+  if (!state.game || !state.map || state.game.status.kind === 'over') {
+    writeSave(null);
+    return;
+  }
+  pendingSave = setTimeout(() => {
+    const { game, map, seats, viewer, log } = useGame.getState();
+    if (game && map) writeSave({ game, map, seats, viewer, log });
+  }, 200);
+});

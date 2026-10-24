@@ -28,6 +28,16 @@ npm run dev
 - `src/gen`: the map generator (runs in a Web Worker).
 - `src/ui`: React interface, PixiJS board and card art; `src/ui/i18n` holds the English and French text.
 
+## Publishing
+
+The build in `dist/` is a static site with relative paths, so it runs from any host or sub-folder. It installs as an app and plays offline: `sw.js`, written at build time, caches every file.
+
+- **GitHub Pages:** push to a GitHub repository, set Pages to "GitHub Actions" in the repository settings, and `.github/workflows/pages.yml` tests, builds and deploys every push to `main`.
+- **itch.io:** zip the contents of `dist/` (not the folder itself) and upload it as an HTML5 game.
+- **Link previews:** `og:image` points to `./social.png`; replace it with the full URL once the game has a home, as preview scrapers need absolute links.
+
+Icons and the share image come from `tools/figures/brand.html` (run `npm run render:figures` and open that page).
+
 ## Card characters
 
 The characters on the cards are rendered from [KayKit Adventurers](https://kaylousberg.itch.io/kaykit-adventurers) by Kay Lousberg (CC0). Only the rendered pictures in `src/ui/art/figures` ship with the game.

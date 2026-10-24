@@ -1,7 +1,7 @@
-import { type CSSProperties, type Ref, type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { type CSSProperties, type Ref, type RefObject, useLayoutEffect, useRef, useState } from 'react';
 import type { Card, CardId, PlayerState } from '../engine/state';
 import { CardView } from './CardView';
+import { Dialog } from './Dialog';
 import { CARD_WIDTH, type CardSize } from './cardSizes';
 import { useMessages } from './i18n';
 
@@ -81,32 +81,23 @@ function Stack({ cards, faceDown }: { cards: Card[]; faceDown: boolean }) {
 
 function DiscardDialog({ cards, onClose }: { cards: Card[]; onClose: () => void }) {
   const m = useMessages();
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-  return createPortal(
-    <div className="overlay" onClick={onClose}>
-      <div
-        className="overlay__panel discard-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="discard-title"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <h2 id="discard-title">{m.game.discardTitle(cards.length)}</h2>
-        <div className="discard-dialog__cards">
-          {[...cards].reverse().map((card) => (
-            <CardView key={card.id} type={card.type} />
-          ))}
-        </div>
+  return (
+    <Dialog
+      title={m.game.discardTitle(cards.length)}
+      className="discard-dialog"
+      onClose={onClose}
+      footer={
         <button type="button" className="btn btn--primary" onClick={onClose} autoFocus>
           {m.game.close}
         </button>
+      }
+    >
+      <div className="discard-dialog__cards">
+        {[...cards].reverse().map((card) => (
+          <CardView key={card.id} type={card.type} />
+        ))}
       </div>
-    </div>,
-    document.body,
+    </Dialog>
   );
 }
 
