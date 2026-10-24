@@ -122,6 +122,8 @@ h3 {
   display: inline-grid;
   justify-items: center;
   line-height: 1;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .logo__yass {
@@ -143,12 +145,8 @@ h3 {
 
 .logo__tm {
   margin-left: 0.06em;
-  font-size: 0.36em;
+  font-size: max(0.36em, 7px);
   vertical-align: top;
-}
-
-.logo--small .logo__tm {
-  display: none;
 }
 
 .logo--small .logo__yass {
@@ -516,9 +514,6 @@ h3 {
   font-size: 30px;
 }
 
-.about .logo--small .logo__tm {
-  display: inline;
-}
 
 .rules {
   width: min(460px, 100%);
