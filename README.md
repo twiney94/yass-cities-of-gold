@@ -39,6 +39,8 @@ The build in `dist/` is a static site with relative paths, so it runs from any h
 
 Icons and the share image come from `tools/figures/brand.html` (run `npm run render:figures` and open that page).
 
+**Versions:** `version` in `package.json` is bumped by hand for milestones (`0.x.y-alpha` during early development). Each build adds the number of commits on top, so every push to `main` gets the next number with nothing to edit, and is stamped with its commit: About shows e.g. "Version 0.2.0-alpha.24 · build 121cb83". The deploy fetches the full history (`fetch-depth: 0`) so its count matches a local build.
+
 ## Card characters
 
 The characters on the cards are rendered from [KayKit Adventurers](https://kaylousberg.itch.io/kaykit-adventurers) by Kay Lousberg (CC0). Only the rendered pictures in `src/ui/art/figures` ship with the game.

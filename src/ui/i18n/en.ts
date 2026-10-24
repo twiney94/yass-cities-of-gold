@@ -62,6 +62,7 @@ export const en = {
     modes: 'Game mode',
     solo: 'Solo',
     passAndPlay: 'Pass & play',
+    alpha: 'Alpha',
     language: 'Language',
     back: '‹ Menu',
     map: 'Map',
@@ -91,7 +92,7 @@ export const en = {
   },
   about: {
     title: 'About',
-    version: (version: string) => `Version ${version}`,
+    version: (version: string, build: string) => `Version ${version} · build ${build}`,
     madeBy: 'A game by Yass.',
     copyright: "Yass' Cities of Gold™ · © 2026 Yass. All rights reserved.",
     characters: 'Characters',
@@ -141,6 +142,10 @@ export const en = {
   },
   game: {
     quit: 'Quit',
+    quitTitle: 'Leave this expedition?',
+    quitBody: (resume: string) => `Your game is saved. Pick it up any time with “${resume}” on the title screen.`,
+    keepPlaying: 'Keep playing',
+    saveAndQuit: 'Save and quit',
     botTag: (level: BotLevel) => `${LEVEL[level]} bot`,
     cardCount: (count: number) => plural(count, 'card'),
     blockades: (ids: string) => `Blockades ${ids}`,

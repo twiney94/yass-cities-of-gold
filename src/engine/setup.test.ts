@@ -18,6 +18,14 @@ describe('createGame', () => {
     }
   });
 
+  it('shuffles every starting deck on its own, so hands differ between players and between games', () => {
+    const orders = (seed: number) =>
+      createGame({ board, playerCount: 4, seed }).players.map((p) => types([...p.hand, ...p.drawPile]).join());
+
+    expect(new Set(orders(3)).size).toBeGreaterThan(1);
+    expect(new Set([1, 2, 3, 4].map((seed) => orders(seed)[0])).size).toBeGreaterThan(1);
+  });
+
   it('places one piece per player on the starting spaces, in turn order', () => {
     const state = createGame({ board, playerCount: 4, seed: 3 });
 

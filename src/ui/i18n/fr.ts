@@ -62,6 +62,7 @@ export const fr: Messages = {
     modes: 'Mode de jeu',
     solo: 'Solo',
     passAndPlay: 'Entre amis',
+    alpha: 'Alpha',
     language: 'Langue',
     back: '‹ Menu',
     map: 'Carte',
@@ -91,7 +92,7 @@ export const fr: Messages = {
   },
   about: {
     title: 'À propos',
-    version: (version: string) => `Version ${version}`,
+    version: (version: string, build: string) => `Version ${version} · build ${build}`,
     madeBy: 'Un jeu de Yass.',
     copyright: "Yass' Cities of Gold™ · © 2026 Yass. Tous droits réservés.",
     characters: 'Personnages',
@@ -141,6 +142,10 @@ export const fr: Messages = {
   },
   game: {
     quit: 'Quitter',
+    quitTitle: "Quitter l'expédition ?",
+    quitBody: (resume: string) => `Votre partie est sauvegardée. Reprenez-la quand vous voulez avec « ${resume} » sur l'écran titre.`,
+    keepPlaying: 'Continuer à jouer',
+    saveAndQuit: 'Sauvegarder et quitter',
     botTag: (level: BotLevel) => `Bot ${LEVEL[level].toLowerCase()}`,
     cardCount: (count: number) => plural(count, 'carte'),
     blockades: (ids: string) => `Barrages ${ids}`,

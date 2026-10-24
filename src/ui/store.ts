@@ -181,12 +181,17 @@ export const useGame = create<GameStore>((set, get) => ({
 }));
 
 // A game in progress is written to the browser shortly after each change, so a reload or a closed tab
-// can pick it back up; quitting or finishing clears it at once so the menu never offers it again.
+// can pick it back up. Quitting writes it at once for Continue on the title screen; finishing clears it.
 let pendingSave: ReturnType<typeof setTimeout> | undefined;
 useGame.subscribe((state, previous) => {
   if (state.game === previous.game && state.viewer === previous.viewer) return;
   clearTimeout(pendingSave);
-  if (!state.game || !state.map || state.game.status.kind === 'over') {
+  if (!state.game || !state.map) {
+    const { game, map, seats, viewer, log } = previous;
+    if (game && map && game.status.kind !== 'over') writeSave({ game, map, seats, viewer, log });
+    return;
+  }
+  if (state.game.status.kind === 'over') {
     writeSave(null);
     return;
   }

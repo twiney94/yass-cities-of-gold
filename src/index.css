@@ -657,7 +657,7 @@ h3 {
   animation: none;
 }
 
-.with-intro:not(.is-menu) :is(.modes, .menu__links, .menu__corner) {
+.with-intro:not(.is-menu) :is(.modes, .menu__links, .menu__corner, .alpha-badge) {
   visibility: hidden;
   opacity: 0;
   animation: none;
@@ -778,6 +778,27 @@ h3 {
 .menu__links {
   display: flex;
   gap: 10px;
+}
+
+.menu__title > h1 {
+  position: relative;
+}
+
+.alpha-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 3px 8px 2px;
+  border: 1px solid #7a2a17;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #e0603f, #b23a22);
+  color: #fff4e0;
+  font: 700 11px / 1.2 var(--display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  rotate: 8deg;
+  translate: 15% -40%;
+  box-shadow: 0 3px 8px rgb(0 0 0 / 45%);
 }
 
 .menu__links .btn {

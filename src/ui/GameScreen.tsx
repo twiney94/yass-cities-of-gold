@@ -6,6 +6,7 @@ import type { HexKey } from '../engine/hex';
 import type { Insets } from './board/BoardRenderer';
 import { BoardView } from './board/BoardView';
 import { cx } from './cx';
+import { Dialog } from './Dialog';
 import { type CardSnapshot, animateCards, snapshotCards } from './fx/cardMotion';
 import { useMessages } from './i18n';
 import { NO_INTENTS, activePiece, coinsOf, computeIntents, selectedCards } from './intents';
@@ -60,6 +61,7 @@ const useCoveredInsets = (
 
 export function GameScreen() {
   const m = useMessages();
+  const [confirmQuit, setConfirmQuit] = useState(false);
   const game = useGame((s) => s.game)!;
   const seats = useGame((s) => s.seats);
   const map = useGame((s) => s.map)!;
@@ -202,7 +204,7 @@ export function GameScreen() {
         onBlockade={onBlockade}
       />
       <aside className="hud" ref={hudRef}>
-        <HudHead mapTitle={title} onQuit={quit} />
+        <HudHead mapTitle={title} onQuit={() => (game.status.kind === 'over' ? quit() : setConfirmQuit(true))} />
         <TurnPanel
           game={game}
           player={passing ? players[viewer]! : turnPlayer}
@@ -245,6 +247,24 @@ export function GameScreen() {
       <div className="fx-layer" ref={fxLayer} />
       {covered && game.status.kind !== 'over' && <PassScreen player={turnPlayer} onReveal={() => animated(reveal)} />}
       {game.status.kind === 'over' && <GameOver game={game} players={players} onNewGame={() => prepare(seats, map)} onQuit={quit} />}
+      {confirmQuit && (
+        <Dialog
+          title={m.game.quitTitle}
+          onClose={() => setConfirmQuit(false)}
+          footer={
+            <>
+              <button type="button" className="btn" onClick={() => setConfirmQuit(false)} autoFocus>
+                {m.game.keepPlaying}
+              </button>
+              <button type="button" className="btn btn--primary" onClick={quit}>
+                {m.game.saveAndQuit}
+              </button>
+            </>
+          }
+        >
+          <p className="muted">{m.game.quitBody(m.menu.continue)}</p>
+        </Dialog>
+      )}
       {error && <Toast message={m.game.rejected} onDone={clearError} />}
     </div>
   );

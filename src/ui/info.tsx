@@ -22,7 +22,7 @@ export function AboutDialog({ onClose }: { onClose: () => void }) {
     >
       <Logo small />
       <p className="muted">
-        {m.about.version(__APP_VERSION__)} · {m.about.madeBy}
+        {m.about.version(__APP_VERSION__, __APP_BUILD__)} · {m.about.madeBy}
       </p>
       <p className="muted about__copyright">{m.about.copyright}</p>
       <dl className="credits">
