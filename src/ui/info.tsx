@@ -24,6 +24,7 @@ export function AboutDialog({ onClose }: { onClose: () => void }) {
       <p className="muted">
         {m.about.version(__APP_VERSION__)} · {m.about.madeBy}
       </p>
+      <p className="muted about__copyright">{m.about.copyright}</p>
       <dl className="credits">
         <dt>{m.about.characters}</dt>
         <dd>
@@ -31,6 +32,8 @@ export function AboutDialog({ onClose }: { onClose: () => void }) {
             {m.about.charactersCredit}
           </a>
         </dd>
+        <dt>{m.about.music}</dt>
+        <dd>{m.about.musicCredit}</dd>
         <dt>{m.about.fonts}</dt>
         <dd>
           <a href="https://fonts.google.com/specimen/Cinzel" target="_blank" rel="noreferrer">

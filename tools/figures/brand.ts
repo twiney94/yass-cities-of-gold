@@ -53,6 +53,8 @@ const social = async () => {
   context.fillText(title, left, 236);
   context.fillStyle = gold;
   context.fillText(title, left, 232);
+  context.font = '700 30px "Cinzel"';
+  context.fillText('™', left + width + 4, 150);
   context.font = '700 34px "Cinzel"';
   context.fillStyle = '#f2c14e';
   context.fillText("Y A S S'", left + 8, 128);

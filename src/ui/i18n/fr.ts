@@ -59,7 +59,6 @@ export const fr: Messages = {
     playtested: (rounds: number) => `parties d'essai des bots bouclées en ${rounds} tours`,
   },
   menu: {
-    tagline: "Traversez la jungle jusqu'à la Cité d'Or perdue.",
     modes: 'Mode de jeu',
     solo: 'Solo',
     soloBlurb: 'Affrontez 1 à 3 bots',
@@ -95,8 +94,11 @@ export const fr: Messages = {
     title: 'À propos',
     version: (version: string) => `Version ${version}`,
     madeBy: 'Un jeu de Yass.',
+    copyright: "Yass' Cities of Gold™ · © 2026 Yass. Tous droits réservés.",
     characters: 'Personnages',
     charactersCredit: 'KayKit Adventurers par Kay Lousberg (CC0)',
+    music: 'Musique',
+    musicCredit: '« Treasure of the Lost City », thèmes du menu et de la partie, par Yass',
     fonts: 'Polices',
     fontsCredit: 'Cinzel et Cinzel Decorative par Natanael Gama (SIL Open Font License)',
     builtWith: 'Réalisé avec',
@@ -129,6 +131,7 @@ export const fr: Messages = {
     ],
   },
   sound: { on: 'Son activé', off: 'Son coupé' },
+  intro: { begin: 'Cliquez ou touchez pour commencer', presents: 'présente…', skip: 'Passer' },
   dice: {
     title: 'Qui commence ?',
     tie: 'Égalité ! Les ex æquo relancent.',

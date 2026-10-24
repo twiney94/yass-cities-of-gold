@@ -59,7 +59,6 @@ export const en = {
     playtested: (rounds: number) => `bot playtests finished in ${rounds} rounds`,
   },
   menu: {
-    tagline: 'Race through the jungle to the lost City of Gold.',
     modes: 'Game mode',
     solo: 'Solo',
     soloBlurb: 'Race against 1 to 3 bots',
@@ -95,8 +94,11 @@ export const en = {
     title: 'About',
     version: (version: string) => `Version ${version}`,
     madeBy: 'A game by Yass.',
+    copyright: "Yass' Cities of Gold™ · © 2026 Yass. All rights reserved.",
     characters: 'Characters',
     charactersCredit: 'KayKit Adventurers by Kay Lousberg (CC0)',
+    music: 'Music',
+    musicCredit: '“Treasure of the Lost City”, menu and in-game themes, by Yass',
     fonts: 'Fonts',
     fontsCredit: 'Cinzel and Cinzel Decorative by Natanael Gama (SIL Open Font License)',
     builtWith: 'Built with',
@@ -129,6 +131,7 @@ export const en = {
     ],
   },
   sound: { on: 'Sound on', off: 'Sound off' },
+  intro: { begin: 'Click or tap to begin', presents: 'presents…', skip: 'Skip' },
   dice: {
     title: 'Who goes first?',
     tie: 'A tie! The tied players roll again.',

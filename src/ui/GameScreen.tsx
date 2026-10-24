@@ -13,6 +13,7 @@ import { PLAYER_COLORS, logText, playerLook, turnHint } from './labels';
 import { mapSummary, mapTitle } from './maps';
 import { Market } from './market';
 import { EventLog, GameOver, HudHead, PassScreen, PlayersPanel, Toast, TurnActions, TurnPanel } from './panels';
+import { playMusic } from './music';
 import { playSound, soundsFor } from './sound';
 import { needsPassScreen, useGame } from './store';
 import { Tray } from './tray';
@@ -108,6 +109,11 @@ export function GameScreen() {
     },
     [act],
   );
+
+  useEffect(() => {
+    playMusic('game');
+    return () => playMusic('menu');
+  }, []);
 
   useLayoutEffect(() => {
     const before = snapshot.current;

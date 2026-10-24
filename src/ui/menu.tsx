@@ -1,4 +1,4 @@
-import { type CSSProperties, useState } from 'react';
+import { type CSSProperties, useRef, useState } from 'react';
 import type { BotLevel } from '../bot/bot';
 import { type Difficulty, mapCode } from '../gen/code';
 import { LanguageSwitch } from './LanguageSwitch';
@@ -9,6 +9,7 @@ import { type Option, Segmented } from './Segmented';
 import { cx } from './cx';
 import { type Messages, useMessages } from './i18n';
 import { AboutDialog, RulesDialog } from './info';
+import { useIntro } from './intro';
 import { PLAYER_COLORS, type PlayerColor } from './labels';
 import { type GameMap, generateInWorker, mapTitle, parseMapCode, randomSeed, standinMap } from './maps';
 import type { SavedGame } from './save';
@@ -85,17 +86,29 @@ type TitleProps = { save: SavedGame | null; onMode: (mode: Mode) => void; onCont
 export function TitleScreen({ save, onMode, onContinue }: TitleProps) {
   const m = useMessages();
   const [info, setInfo] = useState<'rules' | 'about' | null>(null);
+  const yassRef = useRef<HTMLSpanElement>(null);
+  const intro = useIntro(yassRef);
   return (
-    <div className="menu">
+    <div className={cx('menu', intro.withIntro && 'with-intro', intro.withIntro && `is-${intro.phase}`)} style={intro.style}>
+      {intro.withIntro && <div className="intro-veil" aria-hidden="true" />}
+      {intro.phase === 'gate' && (
+        <button type="button" className="intro-gate" onClick={intro.begin} autoFocus>
+          <span>{m.intro.begin}</span>
+        </button>
+      )}
+      {intro.withIntro && intro.phase !== 'gate' && intro.phase !== 'menu' && (
+        <button type="button" className="btn btn--ghost btn--small intro-skip" onClick={intro.skip}>
+          {m.intro.skip}
+        </button>
+      )}
       <div className="menu__corner">
         <SoundSwitch />
         <LanguageSwitch />
       </div>
       <div className="menu__title">
         <h1>
-          <Logo />
+          <Logo presents={intro.withIntro ? m.intro.presents : undefined} yassRef={yassRef} />
         </h1>
-        <p className="menu__tagline muted">{m.menu.tagline}</p>
         <nav className="modes" aria-label={m.menu.modes}>
           {save && (
             <button type="button" className="mode mode--continue" onClick={onContinue}>

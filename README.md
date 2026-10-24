@@ -46,5 +46,6 @@ To change a pose or prop, put the pack's `Characters/gltf` and `Assets/gltf` fol
 
 ## Credits
 
+- Music: "Treasure of the Lost City", menu and in-game themes, by Yass.
 - Characters: [KayKit Adventurers](https://kaylousberg.itch.io/kaykit-adventurers) by Kay Lousberg, [kaylousberg.com](https://www.kaylousberg.com) (CC0).
 - Fonts: Cinzel and Cinzel Decorative (SIL Open Font License).
