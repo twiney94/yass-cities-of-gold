@@ -1,0 +1,22 @@
+Copyright (c) 2026 Yass. All rights reserved.
+
+Yass' Cities of Gold, including its source code, artwork, music, text, name and logo, is
+proprietary software. It is not open source. The name "Yass' Cities of Gold" and its logo are
+trademarks of Yass.
+
+The source code is published so that it can be read. You may play the game at
+https://twiney94.github.io/yass-cities-of-gold/ and view this repository on GitHub, and GitHub
+users may fork it on GitHub to the extent GitHub's Terms of Service require. No other right is
+granted. Without prior written permission from Yass, you may not copy, modify, merge, publish,
+distribute, host, sublicense or sell the game or any part of it, or create derivative works
+from it.
+
+The third-party components included in the game remain under their own licences, listed in
+public/THIRD_PARTY_NOTICES.txt. Nothing in this notice limits the rights those licences grant.
+
+To ask for permission, contact Yass at https://github.com/twiney94.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR ITS USE.

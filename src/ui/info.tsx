@@ -43,6 +43,11 @@ export function AboutDialog({ onClose }: { onClose: () => void }) {
         <dt>{m.about.builtWith}</dt>
         <dd>React, PixiJS, GSAP, Zustand</dd>
       </dl>
+      <p className="muted about__copyright">
+        <a href="./THIRD_PARTY_NOTICES.txt" target="_blank" rel="noreferrer">
+          {m.about.notices}
+        </a>
+      </p>
     </Dialog>
   );
 }

@@ -1,6 +1,7 @@
 {
   "name": "yass-cities-of-gold",
   "private": true,
+  "license": "UNLICENSED",
   "version": "0.1.0",
   "type": "module",
   "scripts": {
@@ -9,6 +10,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "render:figures": "vite --config tools/figures/vite.config.ts",
+    "notices": "node tools/notices.mjs",
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest"

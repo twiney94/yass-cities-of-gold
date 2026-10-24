@@ -102,6 +102,7 @@ export const fr: Messages = {
     fonts: 'Polices',
     fontsCredit: 'Cinzel et Cinzel Decorative par Natanael Gama (SIL Open Font License)',
     builtWith: 'Réalisé avec',
+    notices: 'Licences tierces',
   },
   rules: {
     back: 'Retour',

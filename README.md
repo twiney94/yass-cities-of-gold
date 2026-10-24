@@ -20,6 +20,7 @@ npm run dev
 | `npm run typecheck` | Type-check the app, the engine and the tooling |
 | `npm run build` | Build for production into `dist/` |
 | `npm run render:figures` | Re-render the card characters (see below) |
+| `npm run notices` | Rewrite `public/THIRD_PARTY_NOTICES.txt` after changing dependencies |
 
 ## Layout
 
@@ -49,3 +50,9 @@ To change a pose or prop, put the pack's `Characters/gltf` and `Assets/gltf` fol
 - Music: "Treasure of the Lost City", menu and in-game themes, by Yass.
 - Characters: [KayKit Adventurers](https://kaylousberg.itch.io/kaykit-adventurers) by Kay Lousberg, [kaylousberg.com](https://www.kaylousberg.com) (CC0).
 - Fonts: Cinzel and Cinzel Decorative (SIL Open Font License).
+
+## License
+
+© 2026 Yass. All rights reserved. Yass' Cities of Gold™ is not open source: you may read the code and play the game, but you may not copy, modify, redistribute or host it, or reuse its art or music, without written permission. See [LICENSE](LICENSE).
+
+Third-party components keep their own licences, listed in [THIRD_PARTY_NOTICES.txt](public/THIRD_PARTY_NOTICES.txt), which ships with the game and is linked from its About screen.

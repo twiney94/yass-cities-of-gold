@@ -102,6 +102,7 @@ export const en = {
     fonts: 'Fonts',
     fontsCredit: 'Cinzel and Cinzel Decorative by Natanael Gama (SIL Open Font License)',
     builtWith: 'Built with',
+    notices: 'Third-party licences',
   },
   rules: {
     back: 'Back',
