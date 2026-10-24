@@ -52,11 +52,20 @@ const retryOnGesture = () => {
 
 const level = () => VOLUME * loudness(useSound.getState().volume);
 
-// The wanted scene fades in, every other track fades out and stops; muting fades everything out.
+const stop = (audio: HTMLAudioElement) => {
+  window.clearInterval(fades.get(audio));
+  fades.delete(audio);
+  audio.volume = 0;
+  audio.pause();
+};
+
+// The wanted scene fades in and every other track fades out and stops; muting stops everything at once.
 const sync = () => {
   const { muted, volume } = useSound.getState();
+  const silent = muted || volume === 0;
   for (const [name, audio] of tracks) {
-    if (name === scene && !muted && volume > 0) {
+    if (silent) stop(audio);
+    else if (name === scene) {
       audio.play().catch(retryOnGesture);
       fadeTo(audio, level());
     } else if (!audio.paused) {

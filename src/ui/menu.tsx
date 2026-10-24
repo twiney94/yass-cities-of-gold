@@ -120,7 +120,6 @@ export function TitleScreen({ save, onMode, onContinue }: TitleProps) {
       <div className="menu__title">
         <h1>
           <Logo presents={intro.withIntro ? m.intro.presents : undefined} yassRef={yassRef} />
-          <span className="alpha-badge">{m.menu.alpha}</span>
         </h1>
         <nav className="modes" aria-label={m.menu.modes}>
           {save && (

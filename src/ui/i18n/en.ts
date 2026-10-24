@@ -62,7 +62,6 @@ export const en = {
     modes: 'Game mode',
     solo: 'Solo',
     passAndPlay: 'Pass & play',
-    alpha: 'Alpha',
     language: 'Language',
     back: '‹ Menu',
     map: 'Map',

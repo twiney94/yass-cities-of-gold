@@ -62,7 +62,6 @@ export const fr: Messages = {
     modes: 'Mode de jeu',
     solo: 'Solo',
     passAndPlay: 'Entre amis',
-    alpha: 'Alpha',
     language: 'Langue',
     back: '‹ Menu',
     map: 'Carte',

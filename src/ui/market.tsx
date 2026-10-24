@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type CSSProperties, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Action } from '../engine/actions';
 import { ALL_CARDS, type CardType } from '../engine/cards';
@@ -11,13 +11,17 @@ import { useMessages } from './i18n';
 import type { Intents } from './intents';
 
 const RESERVE = ALL_CARDS.filter((card) => card.supply.from === 'reserve').map((card) => card.type);
-const PREVIEW_HEIGHT = 156;
+const PREVIEW_WIDTH = CARD_WIDTH.large * 1.5;
+const PREVIEW_HEIGHT = 234;
+const PREVIEW_CAPTION = 34;
 const PREVIEW_GAP = 18;
 
 const previewLeft = (pile: DOMRect) =>
-  pile.right + PREVIEW_GAP + CARD_WIDTH.large <= window.innerWidth
+  pile.right + PREVIEW_GAP + PREVIEW_WIDTH <= window.innerWidth
     ? pile.right + PREVIEW_GAP
-    : Math.max(8, pile.left - PREVIEW_GAP - CARD_WIDTH.large);
+    : Math.max(8, pile.left - PREVIEW_GAP - PREVIEW_WIDTH);
+
+const previewTop = (pile: DOMRect) => Math.max(8, Math.min(pile.top, window.innerHeight - PREVIEW_HEIGHT - PREVIEW_CAPTION - 8));
 
 const formatCoins = (coins: number) => {
   const whole = Math.floor(coins);
@@ -42,7 +46,7 @@ export function Market({ game, intents, coins, onPerform }: Props) {
         data-pile={type}
         onMouseEnter={(event) => {
           const rect = event.currentTarget.getBoundingClientRect();
-          setPreview({ type, top: Math.min(rect.top, window.innerHeight - PREVIEW_HEIGHT - 12), left: previewLeft(rect) });
+          setPreview({ type, top: previewTop(rect), left: previewLeft(rect) });
         }}
         onMouseLeave={() => setPreview(null)}
       >
@@ -76,7 +80,10 @@ export function Market({ game, intents, coins, onPerform }: Props) {
       </div>
       {preview &&
         createPortal(
-          <div className="preview" style={{ top: preview.top, left: preview.left }}>
+          <div
+            className="preview"
+            style={{ top: preview.top, left: preview.left, '--card-w': `${PREVIEW_WIDTH}px`, '--card-h': `${PREVIEW_HEIGHT}px` } as CSSProperties}
+          >
             <CardView type={preview.type} size="large" />
           </div>,
           document.body,
