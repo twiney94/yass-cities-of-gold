@@ -34,7 +34,7 @@ The build in `dist/` is a static site with relative paths, so it runs from any h
 
 - **GitHub Pages:** push to a GitHub repository, set Pages to "GitHub Actions" in the repository settings, and `.github/workflows/pages.yml` tests, builds and deploys every push to `main`.
 - **itch.io:** zip the contents of `dist/` (not the folder itself) and upload it as an HTML5 game.
-- **Link previews:** `og:image` points to `./social.png`; replace it with the full URL once the game has a home, as preview scrapers need absolute links.
+- **Live:** https://twiney94.github.io/yass-cities-of-gold/ (GitHub Pages). Link previews use the absolute `og:image` and `og:url` in `index.html`; update them if the game moves.
 
 Icons and the share image come from `tools/figures/brand.html` (run `npm run render:figures` and open that page).
 
