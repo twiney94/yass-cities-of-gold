@@ -5,6 +5,10 @@ on:
   push:
     branches: [main, staging]
   workflow_dispatch:
+    inputs:
+      discord_tag:
+        description: Post an existing release's notes to Discord again (e.g. v0.4.1-alpha)
+        required: false
 
 permissions:
   contents: read
@@ -55,6 +59,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      tag: ${{ steps.notes.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,6 +69,7 @@ jobs:
         with:
           node-version: 22
       - name: Publish the release notes
+        id: notes
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -74,3 +81,29 @@ jobs:
           flags=()
           if [[ "$tag" == *-* ]]; then flags+=(--prerelease); fi
           gh release create "$tag" --target "$GITHUB_SHA" --title "$tag" --notes-file notes.md "${flags[@]}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+  # Posts a new release's notes, or an existing release's when the workflow is run by hand with its tag, to the
+  # Discord channel whose webhook address is in the DISCORD_WEBHOOK_URL secret.
+  discord:
+    needs: release
+    if: always() && (needs.release.outputs.tag != '' || inputs.discord_tag != '')
+    runs-on: ubuntu-latest
+    env:
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      TAG: ${{ needs.release.outputs.tag || inputs.discord_tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Post the release notes to Discord
+        if: env.DISCORD_WEBHOOK_URL != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_URL: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ env.TAG }}
+          PLAY_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+        run: |
+          gh release view "$TAG" --json body --jq .body > notes.md
+          node --experimental-strip-types tools/release.ts --discord "$TAG" notes.md "$RELEASE_URL" "$PLAY_URL" \
+            | curl --fail --silent --show-error -H 'Content-Type: application/json' --data @- "$DISCORD_WEBHOOK_URL"
