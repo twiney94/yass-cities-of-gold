@@ -26,8 +26,9 @@ const filesIn = (dir: string): string[] =>
     return statSync(path).isDirectory() ? filesIn(path) : [path]
   })
 
-// Link previews only need the share image online, and browsers that run the game all read woff2.
-const OFFLINE_SKIP = /(^\.\/social\.jpg$|\.woff$)/
+// Link previews and home-screen installs fetch the share image and icons themselves, and browsers that run the game
+// all read woff2, so none of those need to be in the offline copy.
+const OFFLINE_SKIP = /(^\.\/social\.jpg$|^\.\/icons\/|\.woff$)/
 
 // Writes sw.js next to the build: it precaches every emitted file so the game installs and plays offline.
 const offlineShell = (): Plugin => ({

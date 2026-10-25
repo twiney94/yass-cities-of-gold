@@ -1,9 +1,7 @@
 import '@fontsource/cinzel/700.css';
 import '@fontsource/cinzel-decorative/900.css';
-import favicon from '../../public/favicon.svg?url';
 import backdrop from '../../src/ui/art/menu-backdrop.webp?url';
-
-const BACKGROUND = '#14271c';
+import painting from './app-icon.webp?url';
 
 const image = (src: string) =>
   new Promise<HTMLImageElement>((resolve, reject) => {
@@ -20,13 +18,11 @@ const canvas = (width: number, height: number) => {
   return { element, context: element.getContext('2d')! };
 };
 
-// The icon is drawn inside the inner 80% so launchers that crop to a circle keep the whole temple.
-const icon = async (size: number, inset: number) => {
+// The app icon is the square painting, edge to edge: phones round or crop its corners themselves.
+const icon = async (size: number) => {
   const { element, context } = canvas(size, size);
-  context.fillStyle = BACKGROUND;
-  context.fillRect(0, 0, size, size);
-  const art = await image(favicon);
-  context.drawImage(art, size * inset, size * inset, size * (1 - 2 * inset), size * (1 - 2 * inset));
+  context.imageSmoothingQuality = 'high';
+  context.drawImage(await image(painting), 0, 0, size, size);
   return element;
 };
 
@@ -89,10 +85,10 @@ const save = async (name: string, element: HTMLCanvasElement, type = 'image/png'
   document.getElementById('out')!.append(preview);
 };
 
-await save('icons/icon-192.png', await icon(192, 0));
-await save('icons/icon-512.png', await icon(512, 0));
-await save('icons/maskable-512.png', await icon(512, 0.1));
-await save('icons/apple-touch-icon.png', await icon(180, 0.06));
+await save('icons/icon-192.png', await icon(192));
+await save('icons/icon-512.png', await icon(512));
+await save('icons/maskable-512.png', await icon(512));
+await save('icons/apple-touch-icon.png', await icon(180));
 // A photo-like JPEG keeps the link preview small enough for chat apps that drop images over about 300 KB.
 await save('social.jpg', await social(), 'image/jpeg');
 document.getElementById('status')!.textContent = 'Done';
