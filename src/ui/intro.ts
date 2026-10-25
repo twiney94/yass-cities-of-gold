@@ -17,9 +17,11 @@ type Frame = { presents: number; alone: number; y: number; logoX: number; logoY:
 
 let played = false;
 
+// Phones skip the tap-to-start screen: the intro plays silently and the music starts with the first tap.
 const firstPhase = (): IntroPhase => {
   if (played || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 'menu';
-  return useSound.getState().muted || canAutoplay() ? 'black' : 'gate';
+  const skipGate = useSound.getState().muted || canAutoplay() || window.matchMedia('(pointer: coarse)').matches;
+  return skipGate ? 'black' : 'gate';
 };
 
 // The logo is held at the middle of the screen until the menu comes in. "Yass presents…" is centred on

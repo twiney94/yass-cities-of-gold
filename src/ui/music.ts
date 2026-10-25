@@ -39,11 +39,13 @@ const fadeTo = (audio: HTMLAudioElement, target: number, done?: () => void) => {
   fades.set(audio, fade);
 };
 
-// Browsers refuse to start audio before the visitor has interacted; try again on the first click or key.
+// Browsers refuse to start audio before the visitor has interacted; try again on the first click or key, and
+// unlock the other tracks with it so a game's music can start later without another tap.
 const retryOnGesture = () => {
   const retry = () => {
     window.removeEventListener('pointerdown', retry);
     window.removeEventListener('keydown', retry);
+    unlockMusic();
     sync();
   };
   window.addEventListener('pointerdown', retry);
@@ -89,9 +91,11 @@ useSound.subscribe(({ muted, volume }, previous) => {
 export const canAutoplay = () =>
   (navigator as Navigator & { getAutoplayPolicy?: (type: 'mediaelement') => string }).getAutoplayPolicy?.('mediaelement') === 'allowed';
 
-// Called from a click so the browser lets both tracks play later, when the intro or a game needs them.
+// Called from a click so the browser lets the tracks play later, when the intro or a game needs them. The
+// track already wanted is left to sync(), which plays it for real.
 export const unlockMusic = () => {
   for (const name of Object.keys(SOURCES) as MusicScene[]) {
+    if (name === scene) continue;
     const audio = track(name);
     audio.muted = true;
     void audio
