@@ -39,7 +39,9 @@ describe('discordMessage', () => {
   it('posts the notes in a card linking to the release and the game', () => {
     const notes = '### Fixes\n\n- Make card text unselectable';
     const message = discordMessage('v0.4.1-alpha', notes, 'https://example.org/releases/v0.4.1-alpha', 'https://example.org/game/');
-    expect(message.avatar_url).toBe('https://example.org/game/icons/icon-192.png');
+    expect(message.avatar_url).toBe('https://example.org/game/icons/icon-192.png?v=v0.4.1-alpha');
+    expect(message.content).toBe('@here A new version of Cities of Gold has been released!');
+    expect(message.allowed_mentions).toEqual({ parse: ['everyone'] });
     expect(message.embeds[0]).toEqual({
       title: "Yass' Cities of Gold v0.4.1-alpha",
       url: 'https://example.org/releases/v0.4.1-alpha',

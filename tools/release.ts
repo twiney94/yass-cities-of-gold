@@ -22,10 +22,13 @@ export const releaseNotes = (messages: readonly string[]): string => {
   }).join('\n\n');
 };
 
-// A Discord webhook message: the notes in a gold card linking to the release, with Discord's bold for headings.
+// A Discord webhook message: an @here announcement above the notes in a gold card linking to the release, with
+// Discord's bold for headings. The avatar address carries the tag because Discord caches images by address.
 export const discordMessage = (tag: string, notes: string, releaseUrl: string, playUrl: string) => ({
   username: "Yass' Cities of Gold",
-  avatar_url: new URL('icons/icon-192.png', playUrl).href,
+  avatar_url: new URL(`icons/icon-192.png?v=${tag}`, playUrl).href,
+  content: '@here A new version of Cities of Gold has been released!',
+  allowed_mentions: { parse: ['everyone'] },
   embeds: [
     {
       title: `Yass' Cities of Gold ${tag}`,
