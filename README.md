@@ -35,6 +35,7 @@ The build in `dist/` is a static site with relative paths, so it runs from any h
 
 - **GitHub Pages:** push to a GitHub repository, set Pages to "GitHub Actions" in the repository settings, and `.github/workflows/pages.yml` checks every push to `staging` and `main` (lint, notices, tests, build) and deploys `main`.
 - **Branches:** changes are made on branches cut from `staging` and merged back into it, where they wait without touching the live game. A release is merging `staging` into `main`, which deploys everything it collected.
+- **Release notes:** after each deploy of `main`, the workflow tags the commit with its version (e.g. `v0.4.0-alpha`) and publishes a GitHub Release listing the `feat:` and `fix:`/`perf:` commits since the previous one (`tools/release.ts`). Pre-release versions are marked as pre-releases; a release that does not move the version publishes nothing.
 - **itch.io:** zip the contents of `dist/` (not the folder itself) and upload it as an HTML5 game.
 - **Live:** https://twiney94.github.io/yass-cities-of-gold/ (GitHub Pages). Link previews use the absolute `og:image` and `og:url` in `index.html`; update them if the game moves.
 

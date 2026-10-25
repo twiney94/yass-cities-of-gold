@@ -47,3 +47,30 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # Each release gets a GitHub Release and a version tag, with notes listing the features and fixes it brings.
+  release:
+    if: github.ref == 'refs/heads/main'
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Publish the release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(node --experimental-strip-types tools/release.ts notes.md)
+          if [ -z "$tag" ]; then
+            echo "The version has not changed since the last release."
+            exit 0
+          fi
+          flags=()
+          if [[ "$tag" == *-* ]]; then flags+=(--prerelease); fi
+          gh release create "$tag" --target "$GITHUB_SHA" --title "$tag" --notes-file notes.md "${flags[@]}"

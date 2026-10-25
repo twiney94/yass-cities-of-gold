@@ -4,7 +4,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import react from '@vitejs/plugin-react'
 import { type Plugin, defineConfig } from 'vite'
-import { versionFrom } from './tools/version.ts'
+import { commitMessages, versionFrom } from './tools/version.ts'
 
 const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }
 
@@ -16,10 +16,8 @@ const git = (...args: string[]) => {
   }
 }
 
-// Commit messages oldest first, NUL-separated so a message body can span lines; the commit hash points a player's
-// report at the exact build.
-const messages = (git('log', '--reverse', '--format=%B%x00') ?? '').split('\0').map((message) => message.trim())
-const appVersion = versionFrom(version, messages)
+// The commit hash points a player's report at the exact build.
+const appVersion = versionFrom(version, commitMessages())
 const build = git('rev-parse', '--short', 'HEAD') ?? 'dev'
 
 const filesIn = (dir: string): string[] =>
