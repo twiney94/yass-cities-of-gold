@@ -1919,6 +1919,11 @@ h3 {
   --card-h: 64px;
 }
 
+.zone--removed .card {
+  --w: var(--card-w);
+  --h: var(--card-h);
+}
+
 .zone--removed .zone__label {
   font-size: 10px;
   white-space: nowrap;
