@@ -150,7 +150,11 @@ export const en = {
     blockades: (ids: string) => `Blockades ${ids}`,
     inCity: 'In the City of Gold',
     finalRound: 'Final round',
-    botPlayed: (name: string) => `${name} played`,
+    banner: {
+      played: (name: string) => `${name} played`,
+      bought: (name: string) => `${name} bought`,
+      took: (name: string) => `${name} took`,
+    },
     market: 'Market',
     close: 'Close',
     buyCard: 'Buy',

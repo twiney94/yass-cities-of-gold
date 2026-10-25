@@ -150,7 +150,11 @@ export const fr: Messages = {
     blockades: (ids: string) => `Barrages ${ids}`,
     inCity: "Dans la Cité d'Or",
     finalRound: 'Dernier tour',
-    botPlayed: (name: string) => `${name} a joué`,
+    banner: {
+      played: (name: string) => `${name} a joué`,
+      bought: (name: string) => `${name} a acheté`,
+      took: (name: string) => `${name} a pris`,
+    },
     market: 'Marché',
     close: 'Fermer',
     buyCard: 'Acheter',

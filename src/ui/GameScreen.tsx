@@ -10,11 +10,12 @@ import { Dialog } from './Dialog';
 import { type CardSnapshot, animateCards, snapshotCards } from './fx/cardMotion';
 import { useMessages } from './i18n';
 import { NO_INTENTS, activePiece, coinsOf, computeIntents, selectedCards } from './intents';
-import { PLAYER_COLORS, logText, playerLook, turnHint } from './labels';
+import { PLAYER_COLORS, logText, playBanner, playerLook, turnHint } from './labels';
 import { mapSummary, mapTitle } from './maps';
 import { Market } from './market';
 import { EventLog, GameOver, HudHead, PassScreen, PlayersPanel, Toast, TurnActions, TurnPanel } from './panels';
 import { playMusic } from './music';
+import { PlayBanners } from './PlayBanner';
 import { playSound, soundsFor } from './sound';
 import { needsPassScreen, useGame } from './store';
 import { Tray } from './tray';
@@ -161,6 +162,7 @@ export function GameScreen() {
   const choosingPiece =
     !locked && ownPieces > 1 && selectedCount === 0 && !game.turn.movement && !game.turn.pending && game.turn.stage === 'moving';
   const botPlayed = game.turn.player !== viewer ? game.players[game.turn.player]!.played : null;
+  const banner = useMemo(() => playBanner(animation.events, viewer), [animation, viewer]);
 
   const title = mapTitle(map, m);
   const summary = mapSummary(map, m);
@@ -242,6 +244,14 @@ export function GameScreen() {
           handHidden={seats[viewer]?.kind === 'bot'}
           selected={selection.cards}
           onToggle={interactive ? toggleCard : undefined}
+        />
+      )}
+      {!covered && (
+        <PlayBanners
+          id={animation.id}
+          banner={banner}
+          players={players}
+          style={{ top: insets.top, right: insets.right, bottom: insets.bottom, left: insets.left }}
         />
       )}
       <div className="fx-layer" ref={fxLayer} />

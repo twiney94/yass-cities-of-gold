@@ -2537,6 +2537,130 @@ h3 {
   pointer-events: none;
 }
 
+/* What another player just did */
+
+.play-banners {
+  position: absolute;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.play-banner {
+  --card-w: 112px;
+  --card-h: 156px;
+  position: relative;
+  grid-area: 1 / 1;
+  display: grid;
+  justify-items: center;
+}
+
+.play-banner::before {
+  content: '';
+  position: absolute;
+  inset: -18% -30%;
+  z-index: -1;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--seat) 30%, rgb(8 14 10 / 80%)) 40%, transparent);
+}
+
+.play-banner__title {
+  width: 440px;
+  max-width: 92vw;
+  margin-bottom: -20px;
+  overflow: visible;
+}
+
+.play-banner__title text {
+  font-family: var(--display);
+  font-size: 38px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  fill: var(--gold);
+  stroke: #1d1307;
+  stroke-width: 7px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+
+.play-banner__cards {
+  display: flex;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .play-banner {
+    --card-w: 76px;
+    --card-h: 106px;
+  }
+
+  .play-banner__title {
+    width: 320px;
+    margin-bottom: -14px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .play-banner::before,
+  .play-banner__title {
+    animation: banner-fade-in 320ms ease-out backwards;
+  }
+
+  .play-banner .card {
+    animation: banner-card-in 620ms cubic-bezier(0.2, 0.75, 0.3, 1) calc(var(--i) * 90ms) backwards;
+  }
+
+  .play-banner.is-leaving::before,
+  .play-banner.is-leaving .play-banner__title {
+    animation: banner-fade-out 380ms ease-in forwards;
+  }
+
+  .play-banner.is-leaving .card {
+    animation: banner-card-out 480ms cubic-bezier(0.5, 0, 0.75, 0.3) calc((var(--n) - 1 - var(--i)) * 70ms) forwards;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .play-banner.is-leaving {
+    display: none;
+  }
+}
+
+@keyframes banner-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes banner-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes banner-card-in {
+  from {
+    opacity: 0;
+    translate: -70vw 40px;
+    rotate: -16deg;
+  }
+
+  70% {
+    opacity: 1;
+    translate: 10px -6px;
+    rotate: 2deg;
+  }
+}
+
+@keyframes banner-card-out {
+  to {
+    opacity: 0;
+    translate: 70vw 40px;
+    rotate: 16deg;
+  }
+}
+
 /* Overlays */
 
 .overlay {

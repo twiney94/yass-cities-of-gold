@@ -1,7 +1,7 @@
 import type { GameEvent } from '../engine/actions';
 import type { BlockadeId } from '../engine/board';
 import type { CardType } from '../engine/cards';
-import type { GameState } from '../engine/state';
+import type { Card, GameState } from '../engine/state';
 import type { Messages } from './i18n/en';
 import type { Intents } from './intents';
 
@@ -60,6 +60,19 @@ export type LogEntry =
   | { kind: 'finalRound'; player: number; last: boolean }
   | { kind: 'turn'; player: number }
   | { kind: 'won'; player: number };
+
+export type Banner = { player: number; verb: 'played' | 'bought' | 'took'; cards: Card[] };
+
+// A purchase shows the card bought rather than the coins spent on it.
+export const playBanner = (events: GameEvent[], viewer: number): Banner | null => {
+  for (const event of events) {
+    if (event.type === 'cardGained' && event.player !== viewer) {
+      return { player: event.player, verb: event.via === 'purchase' ? 'bought' : 'took', cards: [event.card] };
+    }
+  }
+  const played = events.flatMap((event) => (event.type === 'cardPlayed' && event.player !== viewer ? [event] : []));
+  return played.length > 0 ? { player: played[0]!.player, verb: 'played', cards: played.map((event) => event.card) } : null;
+};
 
 export const describeEvents = (events: GameEvent[], game: GameState): LogEntry[] => {
   const entries: LogEntry[] = [];

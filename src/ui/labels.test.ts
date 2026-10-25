@@ -4,7 +4,7 @@ import { at, trackBoard } from '../engine/testing/boards';
 import { newGame } from '../engine/testing/fixtures';
 import { en } from './i18n/en';
 import { fr } from './i18n/fr';
-import { describeEvents, logText, recolor } from './labels';
+import { describeEvents, logText, playBanner, recolor } from './labels';
 
 const players = [
   { name: 'Red', hex: '#d9483b' },
@@ -51,5 +51,37 @@ describe('recolor', () => {
   it('wraps round the palette and can hand back the chooser’s old colour', () => {
     const seats = [{ color: 'black' as const }, { color: 'red' as const }];
     expect(recolor(seats, 1, 'black')).toEqual([{ color: 'red' }, { color: 'black' }]);
+  });
+});
+
+describe('playBanner', () => {
+  const trader = { id: 1, type: 'traveler' as const };
+  const scout = { id: 2, type: 'scout' as const };
+  const pathfinder = { id: 3, type: 'explorer' as const };
+
+  it('shows the cards another player played', () => {
+    const events: GameEvent[] = [
+      { type: 'cardPlayed', player: 1, card: trader },
+      { type: 'cardPlayed', player: 1, card: scout },
+      { type: 'pieceMoved', pieceId: 1, from: at(0), to: at(1) },
+    ];
+    expect(playBanner(events, 0)).toEqual({ player: 1, verb: 'played', cards: [trader, scout] });
+  });
+
+  it('shows the card bought rather than the coins paid for it', () => {
+    const events: GameEvent[] = [
+      { type: 'cardPlayed', player: 1, card: trader },
+      { type: 'cardGained', player: 1, card: pathfinder, via: 'purchase' },
+    ];
+    expect(playBanner(events, 0)).toEqual({ player: 1, verb: 'bought', cards: [pathfinder] });
+  });
+
+  it('shows a card taken for free with the Telegraph as taken', () => {
+    expect(playBanner([{ type: 'cardGained', player: 2, card: pathfinder, via: 'transmitter' }], 0)?.verb).toBe('took');
+  });
+
+  it('shows nothing for the watcher or for actions without cards', () => {
+    expect(playBanner([{ type: 'cardPlayed', player: 0, card: trader }], 0)).toBeNull();
+    expect(playBanner([{ type: 'pieceMoved', pieceId: 1, from: at(0), to: at(1) }], 0)).toBeNull();
   });
 });
