@@ -12,6 +12,7 @@ const NEXT: Partial<Record<IntroPhase, [IntroPhase, number]>> = {
   colour: ['menu', 4300],
 };
 const SCALE = 1.8;
+const LOGO_FONTS = ['900 72px "Cinzel Decorative"', '700 18px Cinzel'];
 
 type Frame = { presents: number; alone: number; y: number; logoX: number; logoY: number; scale: number };
 
@@ -54,7 +55,10 @@ export const useIntro = (yass: RefObject<HTMLElement | null>) => {
   useLayoutEffect(() => {
     if (!withIntro) return;
     let live = true;
-    void document.fonts.ready.then(() => live && yass.current && setFrame(measure(yass.current)));
+    // Safari can report the fonts ready before it has even started on the logo's, so ask for them by name.
+    void Promise.allSettled(LOGO_FONTS.map((font) => document.fonts.load(font)))
+      .then(() => document.fonts.ready)
+      .then(() => live && yass.current && setFrame(measure(yass.current)));
     return () => {
       live = false;
     };
