@@ -39,7 +39,7 @@ The build in `dist/` is a static site with relative paths, so it runs from any h
 
 Icons and the share image come from `tools/figures/brand.html` (run `npm run render:figures` and open that page).
 
-**Versions:** `version` in `package.json` is bumped by hand for milestones (`0.x.y-alpha` during early development). Each build adds the number of commits on top, so every push to `main` gets the next number with nothing to edit, and is stamped with its commit: About shows e.g. "Version 0.2.0-alpha.24 · build 121cb83". The deploy fetches the full history (`fetch-depth: 0`) so its count matches a local build.
+**Versions and commits:** commit subjects start with a [conventional](https://www.conventionalcommits.org) type, and the build works the version out from them (`tools/version.ts`). Starting from `version` in `package.json`, each `feat:` bumps the minor number, each `fix:` or `perf:` the patch, and a breaking change (`feat!:` or a `BREAKING CHANGE:` note) the major; `chore:`, `docs:`, `refactor:`, `test:`, `ci:` and `style:` leave it as is. The `-alpha` label carries through, and each build is also stamped with its commit: About shows e.g. "Version 0.3.0-alpha · build 4f2a91c". Nothing is written back to the repository, so a local build and the deploy agree; the deploy fetches the full history (`fetch-depth: 0`) to read it. Edit `package.json` only to restart the numbering, e.g. to drop `-alpha` at 1.0.
 
 ## Card characters
 
