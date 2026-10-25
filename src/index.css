@@ -38,24 +38,26 @@ body,
   margin: 0;
 }
 
-/* Reach into the strip an iPhone home-screen app leaves empty at the bottom (see screenFit.ts). */
-.has-screen-gap #root {
+/* An iPhone home-screen app is pinned to the screen height, which WebKit under-reports at first (see screenFit.ts).
+   Bottom-anchored layers move down by what the viewport is missing. */
+.screen-pinned #root {
   position: fixed;
-  inset: 0 0 calc(-1 * var(--screen-gap));
-  height: auto;
+  inset: 0 0 auto;
+  height: var(--app-height);
 }
 
-.has-screen-gap :is(.scene, .intro-veil, .cursor-trail, .fx-layer, .overlay, .confetti, .sheet-backdrop) {
-  bottom: calc(-1 * var(--screen-gap));
-  height: calc(100% + var(--screen-gap));
+.screen-pinned :is(.scene, .intro-veil, .cursor-trail, .fx-layer, .overlay, .confetti, .sheet-backdrop) {
+  bottom: auto;
+  height: var(--app-height);
+  min-height: 0;
 }
 
-.has-screen-gap .hud__sheet {
-  bottom: calc(-1 * var(--screen-gap));
+.screen-pinned .hud__sheet {
+  bottom: calc(100% - var(--app-height));
 }
 
-.has-screen-gap .toast {
-  bottom: calc(24px + var(--safe-bottom) - var(--screen-gap));
+.screen-pinned .toast {
+  bottom: calc(100% - var(--app-height) + 24px + var(--safe-bottom));
 }
 
 button {
