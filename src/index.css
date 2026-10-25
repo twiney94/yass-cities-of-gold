@@ -1998,6 +1998,9 @@ h3 {
   height: var(--h);
   perspective: 900px;
   outline: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .card--small {
