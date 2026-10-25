@@ -21,7 +21,7 @@ import { needsPassScreen, useGame } from './store';
 import { Tray } from './tray';
 
 const HANDOFF_DELAY = 1500;
-const BOT_PAUSE = 650;
+const BOT_PAUSE = 1100;
 const BOT_FIRST_PAUSE = 1200;
 const HOP_TIME = 200;
 const OUT_OF_CARDS_PAUSE = 1100;
