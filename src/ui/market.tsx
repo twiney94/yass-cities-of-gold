@@ -4,6 +4,7 @@ import type { Action } from '../engine/actions';
 import { ALL_CARDS, type CardType } from '../engine/cards';
 import type { GameState } from '../engine/state';
 import { CardView } from './CardView';
+import { Dialog } from './Dialog';
 import { SuitIcon } from './art/SuitIcon';
 import { CARD_WIDTH } from './cardSizes';
 import { cx } from './cx';
@@ -30,9 +31,14 @@ const formatCoins = (coins: number) => {
 
 type Props = { game: GameState; intents: Intents; coins: number; onPerform: (actions: Action[]) => void };
 
+// With a mouse a pile previews on hover and buys on click. A touch screen has no hover, so a tap opens the card
+// instead and only its button buys it.
 export function Market({ game, intents, coins, onPerform }: Props) {
   const m = useMessages();
   const [preview, setPreview] = useState<{ type: CardType; top: number; left: number } | null>(null);
+  const [touch] = useState(() => window.matchMedia('(hover: none)').matches);
+  const [inspected, setInspected] = useState<CardType | null>(null);
+  const inspectedAction = inspected && intents.market.get(inspected);
   const { slots, remaining } = game.market;
   const open = slots.includes(null);
 
@@ -45,6 +51,7 @@ export function Market({ game, intents, coins, onPerform }: Props) {
         className={cx('pile', action && 'is-target')}
         data-pile={type}
         onMouseEnter={(event) => {
+          if (touch) return;
           const rect = event.currentTarget.getBoundingClientRect();
           setPreview({ type, top: previewTop(rect), left: previewLeft(rect) });
         }}
@@ -53,7 +60,12 @@ export function Market({ game, intents, coins, onPerform }: Props) {
         {Array.from({ length: Math.min(left, 3) - 1 }, (_, i) => (
           <span key={i} className="pile__layer" style={{ left: (i + 1) * 3, top: -(i + 1) * 3 }} />
         ))}
-        <CardView type={type} size="mini" target={!!action} onClick={action ? () => onPerform([action]) : undefined} />
+        <CardView
+          type={type}
+          size="mini"
+          target={!!action}
+          onClick={touch ? () => setInspected(type) : action ? () => onPerform([action]) : undefined}
+        />
         <span className="pile__count">×{left}</span>
       </div>
     );
@@ -88,6 +100,36 @@ export function Market({ game, intents, coins, onPerform }: Props) {
           </div>,
           document.body,
         )}
+      {inspected && (
+        <Dialog
+          title={m.cards[inspected]}
+          className="market-card"
+          onClose={() => setInspected(null)}
+          footer={
+            <>
+              <button type="button" className="btn" onClick={() => setInspected(null)} autoFocus={!inspectedAction}>
+                {m.game.close}
+              </button>
+              {inspectedAction && (
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  onClick={() => {
+                    setInspected(null);
+                    onPerform([inspectedAction]);
+                  }}
+                >
+                  {inspectedAction.type === 'playTransmitter' ? m.game.takeCard : m.game.buyCard}
+                </button>
+              )}
+            </>
+          }
+        >
+          <div className="market-card__view" style={{ '--card-w': `${PREVIEW_WIDTH}px`, '--card-h': `${PREVIEW_HEIGHT}px` } as CSSProperties}>
+            <CardView type={inspected} />
+          </div>
+        </Dialog>
+      )}
     </section>
   );
 }

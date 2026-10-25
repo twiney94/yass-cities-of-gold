@@ -2520,6 +2520,16 @@ h3 {
   display: block;
 }
 
+/* On phones the market lives in a bottom sheet, so its card dialog has to sit above it. */
+.overlay:has(.market-card) {
+  z-index: 40;
+}
+
+.market-card__view {
+  display: grid;
+  justify-items: center;
+}
+
 .fx-layer {
   position: fixed;
   inset: 0;
