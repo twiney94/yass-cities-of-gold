@@ -1,8 +1,8 @@
 import '@fontsource/cinzel/700.css';
 import '@fontsource/cinzel-decorative/900.css';
 import favicon from '../../public/favicon.svg?url';
+import backdrop from '../../src/ui/art/menu-backdrop.webp?url';
 
-const FIGURES = import.meta.glob<string>('../../src/ui/art/figures/*.webp', { eager: true, query: '?url', import: 'default' });
 const BACKGROUND = '#14271c';
 
 const image = (src: string) =>
@@ -30,51 +30,59 @@ const icon = async (size: number, inset: number) => {
   return element;
 };
 
+// The title screen in a link preview: the painting, and the logo stacked and centred so a square crop keeps it whole.
 const social = async () => {
-  const { element, context } = canvas(1200, 630);
-  const glow = context.createRadialGradient(600, 250, 40, 600, 300, 700);
-  glow.addColorStop(0, '#2b4d38');
-  glow.addColorStop(1, '#0f1d15');
-  context.fillStyle = glow;
-  context.fillRect(0, 0, 1200, 630);
+  const [width, height] = [1200, 630];
+  const { element, context } = canvas(width, height);
+  const art = await image(backdrop);
+  const scale = width / art.width;
+  context.drawImage(art, 0, (height - art.height * scale) * 0.4, width, art.height * scale);
+  const shade = context.createRadialGradient(width / 2, height / 2, 80, width / 2, height / 2, 560);
+  shade.addColorStop(0, 'rgb(8 12 10 / 82%)');
+  shade.addColorStop(1, 'rgb(8 12 10 / 0%)');
+  context.fillStyle = shade;
+  context.fillRect(0, 0, width, height);
 
-  await document.fonts.load('900 110px "Cinzel Decorative"');
-  await document.fonts.load('700 34px "Cinzel"');
-  const title = 'CITIES OF GOLD';
-  context.font = '900 110px "Cinzel Decorative"';
-  const width = context.measureText(title).width;
-  const left = (1200 - width) / 2;
-  const gold = context.createLinearGradient(0, 130, 0, 250);
+  await document.fonts.load('900 120px "Cinzel Decorative"');
+  await document.fonts.load('700 36px "Cinzel"');
+  const lines = ['CITIES OF', 'GOLD'];
+  const size = 124;
+  context.font = `900 ${size}px "Cinzel Decorative"`;
+  const left = (width - Math.max(...lines.map((line) => context.measureText(line).width))) / 2;
+  const top = height / 2 - size * 0.62;
+  const gold = context.createLinearGradient(0, top - size * 0.8, 0, top + size * 1.1);
   gold.addColorStop(0, '#fff4c8');
   gold.addColorStop(0.4, '#f6cf5f');
   gold.addColorStop(0.65, '#c3841a');
   gold.addColorStop(1, '#f0c255');
-  context.fillStyle = '#5b3a0b';
-  context.fillText(title, left, 236);
-  context.fillStyle = gold;
-  context.fillText(title, left, 232);
-  context.font = '700 30px "Cinzel"';
-  context.fillText('™', left + width + 4, 150);
-  context.font = '700 34px "Cinzel"';
-  context.fillStyle = '#f2c14e';
-  context.fillText("Y A S S'", left + 8, 128);
-  context.font = '500 30px system-ui, sans-serif';
-  context.fillStyle = '#d8e0d2';
-  context.textAlign = 'center';
-  context.fillText('A deck-building race through the jungle', 600, 300);
-
-  const heroes = ['explorer', 'sailor', 'scientist', 'pioneer', 'jackOfAllTrades'];
-  for (const [i, name] of heroes.entries()) {
-    const url = FIGURES[`../../src/ui/art/figures/${name}.webp`];
-    if (!url) continue;
-    context.drawImage(await image(url), 90 + i * 210, 330, 290, 290);
+  for (const [i, line] of lines.entries()) {
+    const x = (width - context.measureText(line).width) / 2;
+    const y = top + i * size * 1.02;
+    context.shadowColor = 'rgb(0 0 0 / 55%)';
+    context.shadowBlur = 24;
+    context.shadowOffsetY = 10;
+    context.fillStyle = '#5b3a0b';
+    context.fillText(line, x, y + 4);
+    context.shadowColor = 'transparent';
+    context.fillStyle = gold;
+    context.fillText(line, x, y);
   }
+  const goldWidth = context.measureText(lines[1]!).width;
+  context.font = '700 34px "Cinzel"';
+  context.fillText('™', (width + goldWidth) / 2 + 6, top + size * 1.02 - size * 0.45);
+  context.font = '700 38px "Cinzel"';
+  context.fillStyle = '#f2c14e';
+  context.letterSpacing = '12px';
+  context.shadowColor = 'rgb(0 0 0 / 70%)';
+  context.shadowBlur = 10;
+  context.fillText("YASS'", left + 6, top - size * 0.88);
   return element;
 };
 
-const save = async (name: string, element: HTMLCanvasElement) => {
-  const blob = await new Promise<Blob>((resolve) => element.toBlob((b) => resolve(b!), 'image/png'));
-  await fetch(`/save-public/${name}`, { method: 'POST', body: blob });
+const save = async (name: string, element: HTMLCanvasElement, type = 'image/png') => {
+  const blob = await new Promise<Blob>((resolve) => element.toBlob((b) => resolve(b!), type, 0.86));
+  const response = await fetch(`/save-public/${name}`, { method: 'POST', body: blob });
+  if (!response.ok) throw new Error(`${name} was not saved (${response.status})`);
   const preview = new Image();
   preview.src = URL.createObjectURL(blob);
   preview.title = name;
@@ -85,5 +93,6 @@ await save('icons/icon-192.png', await icon(192, 0));
 await save('icons/icon-512.png', await icon(512, 0));
 await save('icons/maskable-512.png', await icon(512, 0.1));
 await save('icons/apple-touch-icon.png', await icon(180, 0.06));
-await save('social.png', await social());
+// A photo-like JPEG keeps the link preview small enough for chat apps that drop images over about 300 KB.
+await save('social.jpg', await social(), 'image/jpeg');
 document.getElementById('status')!.textContent = 'Done';

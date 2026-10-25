@@ -7,7 +7,7 @@ import { type Plugin, defineConfig } from 'vite';
 const here = dirname(fileURLToPath(import.meta.url));
 const TARGETS = [
   { route: '/save', dir: resolve(here, '../../src/ui/art/figures'), name: /^[a-zA-Z]+\.webp$/ },
-  { route: '/save-public', dir: resolve(here, '../../public'), name: /^(icons\/)?[a-z0-9-]+\.png$/ },
+  { route: '/save-public', dir: resolve(here, '../../public'), name: /^(icons\/)?[a-z0-9-]+\.(png|jpg)$/ },
 ];
 
 const saveRenders = (): Plugin => ({

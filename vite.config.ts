@@ -29,7 +29,7 @@ const filesIn = (dir: string): string[] =>
   })
 
 // Link previews only need the share image online, and browsers that run the game all read woff2.
-const OFFLINE_SKIP = /(^\.\/social\.png$|\.woff$)/
+const OFFLINE_SKIP = /(^\.\/social\.jpg$|\.woff$)/
 
 // Writes sw.js next to the build: it precaches every emitted file so the game installs and plays offline.
 const offlineShell = (): Plugin => ({
