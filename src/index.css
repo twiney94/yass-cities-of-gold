@@ -38,6 +38,26 @@ body,
   margin: 0;
 }
 
+/* Reach into the strip an iPhone home-screen app leaves empty at the bottom (see screenFit.ts). */
+.has-screen-gap #root {
+  position: fixed;
+  inset: 0 0 calc(-1 * var(--screen-gap));
+  height: auto;
+}
+
+.has-screen-gap :is(.scene, .intro-veil, .cursor-trail, .fx-layer, .overlay, .confetti, .sheet-backdrop) {
+  bottom: calc(-1 * var(--screen-gap));
+  height: calc(100% + var(--screen-gap));
+}
+
+.has-screen-gap .hud__sheet {
+  bottom: calc(-1 * var(--screen-gap));
+}
+
+.has-screen-gap .toast {
+  bottom: calc(24px + var(--safe-bottom) - var(--screen-gap));
+}
+
 button {
   font: inherit;
   color: inherit;
