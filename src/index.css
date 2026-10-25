@@ -2604,20 +2604,20 @@ h3 {
 @media (prefers-reduced-motion: no-preference) {
   .play-banner::before,
   .play-banner__title {
-    animation: banner-fade-in 320ms ease-out backwards;
+    animation: banner-fade-in 450ms ease-out backwards;
   }
 
   .play-banner .card {
-    animation: banner-card-in 620ms cubic-bezier(0.2, 0.75, 0.3, 1) calc(var(--i) * 90ms) backwards;
+    animation: banner-card-in 800ms cubic-bezier(0.2, 0.75, 0.3, 1) calc(var(--i) * 110ms) backwards;
   }
 
   .play-banner.is-leaving::before,
   .play-banner.is-leaving .play-banner__title {
-    animation: banner-fade-out 380ms ease-in forwards;
+    animation: banner-fade-out 550ms ease-in forwards;
   }
 
   .play-banner.is-leaving .card {
-    animation: banner-card-out 480ms cubic-bezier(0.5, 0, 0.75, 0.3) calc((var(--n) - 1 - var(--i)) * 70ms) forwards;
+    animation: banner-card-out 620ms cubic-bezier(0.5, 0, 0.75, 0.3) calc((var(--n) - 1 - var(--i)) * 60ms) forwards;
   }
 }
 

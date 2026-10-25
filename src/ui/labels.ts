@@ -61,17 +61,17 @@ export type LogEntry =
   | { kind: 'turn'; player: number }
   | { kind: 'won'; player: number };
 
-export type Banner = { player: number; verb: 'played' | 'bought' | 'took'; cards: Card[] };
+export type Banner = { player: number; verb: 'play' | 'buy' | 'take'; cards: Card[] };
 
 // A purchase shows the card bought rather than the coins spent on it.
-export const playBanner = (events: GameEvent[], viewer: number): Banner | null => {
+export const playBanner = (events: GameEvent[]): Banner | null => {
   for (const event of events) {
-    if (event.type === 'cardGained' && event.player !== viewer) {
-      return { player: event.player, verb: event.via === 'purchase' ? 'bought' : 'took', cards: [event.card] };
+    if (event.type === 'cardGained') {
+      return { player: event.player, verb: event.via === 'purchase' ? 'buy' : 'take', cards: [event.card] };
     }
   }
-  const played = events.flatMap((event) => (event.type === 'cardPlayed' && event.player !== viewer ? [event] : []));
-  return played.length > 0 ? { player: played[0]!.player, verb: 'played', cards: played.map((event) => event.card) } : null;
+  const played = events.flatMap((event) => (event.type === 'cardPlayed' ? [event] : []));
+  return played.length > 0 ? { player: played[0]!.player, verb: 'play', cards: played.map((event) => event.card) } : null;
 };
 
 export const describeEvents = (events: GameEvent[], game: GameState): LogEntry[] => {

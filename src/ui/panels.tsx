@@ -58,7 +58,7 @@ export function TurnPanel({ game, player, hint, choosePiece, botPlayed }: TurnPa
         {choosePiece && <span className="muted"> {m.hints.choosePiece}</span>}
       </p>
       {botPlayed && botPlayed.length > 0 && (
-        <div className="hud__played" aria-label={m.game.banner.played(player.name)}>
+        <div className="hud__played" aria-label={m.game.botPlayed(player.name)}>
           {botPlayed.map((card) => (
             <CardView key={card.id} id={card.id} type={card.type} size="mini" />
           ))}

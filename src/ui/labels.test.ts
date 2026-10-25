@@ -59,13 +59,13 @@ describe('playBanner', () => {
   const scout = { id: 2, type: 'scout' as const };
   const pathfinder = { id: 3, type: 'explorer' as const };
 
-  it('shows the cards another player played', () => {
+  it('shows the cards played', () => {
     const events: GameEvent[] = [
       { type: 'cardPlayed', player: 1, card: trader },
       { type: 'cardPlayed', player: 1, card: scout },
       { type: 'pieceMoved', pieceId: 1, from: at(0), to: at(1) },
     ];
-    expect(playBanner(events, 0)).toEqual({ player: 1, verb: 'played', cards: [trader, scout] });
+    expect(playBanner(events)).toEqual({ player: 1, verb: 'play', cards: [trader, scout] });
   });
 
   it('shows the card bought rather than the coins paid for it', () => {
@@ -73,15 +73,14 @@ describe('playBanner', () => {
       { type: 'cardPlayed', player: 1, card: trader },
       { type: 'cardGained', player: 1, card: pathfinder, via: 'purchase' },
     ];
-    expect(playBanner(events, 0)).toEqual({ player: 1, verb: 'bought', cards: [pathfinder] });
+    expect(playBanner(events)).toEqual({ player: 1, verb: 'buy', cards: [pathfinder] });
   });
 
   it('shows a card taken for free with the Telegraph as taken', () => {
-    expect(playBanner([{ type: 'cardGained', player: 2, card: pathfinder, via: 'transmitter' }], 0)?.verb).toBe('took');
+    expect(playBanner([{ type: 'cardGained', player: 2, card: pathfinder, via: 'transmitter' }])?.verb).toBe('take');
   });
 
-  it('shows nothing for the watcher or for actions without cards', () => {
-    expect(playBanner([{ type: 'cardPlayed', player: 0, card: trader }], 0)).toBeNull();
-    expect(playBanner([{ type: 'pieceMoved', pieceId: 1, from: at(0), to: at(1) }], 0)).toBeNull();
+  it('shows nothing for actions without cards', () => {
+    expect(playBanner([{ type: 'pieceMoved', pieceId: 1, from: at(0), to: at(1) }])).toBeNull();
   });
 });

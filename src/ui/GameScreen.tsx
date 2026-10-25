@@ -1,6 +1,7 @@
 import { type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Action } from '../engine/actions';
 import { botStep } from '../bot/bot';
+import { applyActions } from '../engine/rules';
 import type { BlockadeId } from '../engine/board';
 import type { HexKey } from '../engine/hex';
 import type { Insets } from './board/BoardRenderer';
@@ -10,18 +11,18 @@ import { Dialog } from './Dialog';
 import { type CardSnapshot, animateCards, snapshotCards } from './fx/cardMotion';
 import { useMessages } from './i18n';
 import { NO_INTENTS, activePiece, coinsOf, computeIntents, selectedCards } from './intents';
-import { PLAYER_COLORS, logText, playBanner, playerLook, turnHint } from './labels';
+import { type Banner, PLAYER_COLORS, logText, playBanner, playerLook, turnHint } from './labels';
 import { mapSummary, mapTitle } from './maps';
 import { Market } from './market';
 import { EventLog, GameOver, HudHead, PassScreen, PlayersPanel, Toast, TurnActions, TurnPanel } from './panels';
 import { playMusic } from './music';
-import { PlayBanners } from './PlayBanner';
+import { BANNER_HOLD, BANNER_LEAVE, PlayBanner } from './PlayBanner';
 import { playSound, soundsFor } from './sound';
 import { needsPassScreen, useGame } from './store';
 import { Tray } from './tray';
 
 const HANDOFF_DELAY = 1500;
-const BOT_PAUSE = 1100;
+const BOT_PAUSE = 800;
 const BOT_FIRST_PAUSE = 1200;
 const HOP_TIME = 200;
 const OUT_OF_CARDS_PAUSE = 1100;
@@ -98,6 +99,7 @@ export function GameScreen() {
   const insets = useCoveredInsets(areaRef, hudRef, trayRef, !covered);
 
   const [marketOpen, setMarketOpen] = useState(false);
+  const [announced, setAnnounced] = useState<{ banner: Banner; leaving: boolean } | null>(null);
   const fxLayer = useRef<HTMLDivElement>(null);
   const snapshot = useRef<CardSnapshot | null>(null);
   const animated = useCallback((change: () => void) => {
@@ -135,8 +137,25 @@ export function GameScreen() {
     if (!botLevel) return;
     const hops = animation.events.filter((event) => event.type === 'pieceMoved').length;
     const delay = (animation.events.length === 0 ? BOT_FIRST_PAUSE : BOT_PAUSE) + hops * HOP_TIME;
-    const timer = window.setTimeout(() => act(botStep(game, botLevel)), delay);
-    return () => window.clearTimeout(timer);
+    const timers: number[] = [];
+    const later = (ms: number, run: () => void) => timers.push(window.setTimeout(run, ms));
+    // A bot's card play is announced first and only then applied, so its pawn moves once the banner has gone.
+    later(delay, () => {
+      const actions = botStep(game, botLevel);
+      const result = applyActions(game, actions);
+      const banner = result.ok ? playBanner(result.events) : null;
+      if (!banner) return act(actions);
+      setAnnounced({ banner, leaving: false });
+      later(BANNER_HOLD, () => setAnnounced({ banner, leaving: true }));
+      later(BANNER_HOLD + BANNER_LEAVE, () => {
+        setAnnounced(null);
+        act(actions);
+      });
+    });
+    return () => {
+      for (const timer of timers) window.clearTimeout(timer);
+      setAnnounced(null);
+    };
   }, [botLevel, game, animation, act]);
 
   useEffect(() => {
@@ -162,7 +181,6 @@ export function GameScreen() {
   const choosingPiece =
     !locked && ownPieces > 1 && selectedCount === 0 && !game.turn.movement && !game.turn.pending && game.turn.stage === 'moving';
   const botPlayed = game.turn.player !== viewer ? game.players[game.turn.player]!.played : null;
-  const banner = useMemo(() => playBanner(animation.events, viewer), [animation, viewer]);
 
   const title = mapTitle(map, m);
   const summary = mapSummary(map, m);
@@ -246,11 +264,11 @@ export function GameScreen() {
           onToggle={interactive ? toggleCard : undefined}
         />
       )}
-      {!covered && (
-        <PlayBanners
-          id={animation.id}
-          banner={banner}
-          players={players}
+      {announced && !covered && (
+        <PlayBanner
+          banner={announced.banner}
+          player={players[announced.banner.player]!}
+          leaving={announced.leaving}
           style={{ top: insets.top, right: insets.right, bottom: insets.bottom, left: insets.left }}
         />
       )}
