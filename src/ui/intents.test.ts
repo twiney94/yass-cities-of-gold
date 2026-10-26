@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { at, trackBoard } from '../engine/testing/boards';
 import { addPiece, newGame, placePiece, run, setDrawPile, setHand } from '../engine/testing/fixtures';
-import { type Selection, cardsRemovedBy, computeIntents } from './intents';
+import { type Selection, cardsRemovedBy, computeIntents, keptBySelectingMore } from './intents';
 
 const game = (track: string) => {
   const state = newGame(trackBoard(track));
@@ -126,5 +126,28 @@ describe('cardsRemovedBy', () => {
     const [telegraph] = setHand(state, 0, 'transmitter');
 
     expect(cardsRemovedBy(state, { type: 'playTransmitter', cardId: telegraph!.id, take: 'scout' })).toEqual([telegraph]);
+  });
+});
+
+describe('keptBySelectingMore', () => {
+  it('is true when the rest of the hand covers the price without the single-use card', () => {
+    const state = game('G1');
+    const [chest, trader] = setHand(state, 0, 'treasureChest', 'traveler', 'sailor', 'explorer');
+
+    expect(keptBySelectingMore(state, { type: 'buy', cardType: 'photographer', cardIds: [chest!.id, trader!.id] })).toBe(true);
+  });
+
+  it('is false when even the whole hand needs the single-use card at full value', () => {
+    const state = game('G1');
+    const [chest] = setHand(state, 0, 'treasureChest', 'sailor');
+
+    expect(keptBySelectingMore(state, { type: 'buy', cardType: 'trailblazer', cardIds: [chest!.id] })).toBe(false);
+  });
+
+  it('is false for the Telegraph, which always leaves when it takes a card', () => {
+    const state = game('G1');
+    const [telegraph] = setHand(state, 0, 'transmitter', 'traveler', 'traveler');
+
+    expect(keptBySelectingMore(state, { type: 'playTransmitter', cardId: telegraph!.id, take: 'scout' })).toBe(false);
   });
 });

@@ -2543,6 +2543,13 @@ h3 {
   text-align: center;
 }
 
+.leaving-note__hint {
+  display: block;
+  margin-top: 0.2em;
+  font: 500 12px / 1.25 system-ui, sans-serif;
+  color: #f5c7b8;
+}
+
 .preview .leaving-note {
   position: absolute;
   top: calc(100% + 46px);

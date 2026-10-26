@@ -9,13 +9,13 @@ import { SuitIcon } from './art/SuitIcon';
 import { CARD_WIDTH } from './cardSizes';
 import { cx } from './cx';
 import { useMessages } from './i18n';
-import { type Intents, cardsRemovedBy } from './intents';
+import { type Intents, cardsRemovedBy, keptBySelectingMore } from './intents';
 
 const RESERVE = ALL_CARDS.filter((card) => card.supply.from === 'reserve').map((card) => card.type);
 const PREVIEW_WIDTH = CARD_WIDTH.large * 1.5;
 const PREVIEW_HEIGHT = 234;
 const PREVIEW_CAPTION = 34;
-const PREVIEW_NOTE = 36;
+const PREVIEW_NOTE = 54;
 const PREVIEW_GAP = 18;
 
 const previewLeft = (pile: DOMRect) =>
@@ -32,6 +32,9 @@ const formatCoins = (coins: number) => {
 };
 
 type Props = { game: GameState; intents: Intents; coins: number; onPerform: (actions: Action[]) => void };
+type Leaving = { cards: Card[]; keepable: boolean };
+
+const NOT_LEAVING: Leaving = { cards: [], keepable: false };
 
 // With a mouse a pile previews on hover and buys on click. A touch screen has no hover, so a tap opens the card
 // instead and only its button buys it.
@@ -43,12 +46,12 @@ export function Market({ game, intents, coins, onPerform }: Props) {
   const inspectedAction = inspected && intents.market.get(inspected);
   const { slots, remaining } = game.market;
   const open = slots.includes(null);
-  const leaving = (type: CardType) => {
+  const leaving = (type: CardType): Leaving => {
     const action = intents.market.get(type);
-    return action ? cardsRemovedBy(game, action) : [];
+    return action ? { cards: cardsRemovedBy(game, action), keepable: keptBySelectingMore(game, action) } : NOT_LEAVING;
   };
-  const previewLeaving = preview ? leaving(preview.type) : [];
-  const inspectedLeaving = inspected ? leaving(inspected) : [];
+  const previewLeaving = preview ? leaving(preview.type) : NOT_LEAVING;
+  const inspectedLeaving = inspected ? leaving(inspected) : NOT_LEAVING;
 
   const pile = (type: CardType) => {
     const left = remaining[type] ?? 0;
@@ -61,7 +64,7 @@ export function Market({ game, intents, coins, onPerform }: Props) {
         onMouseEnter={(event) => {
           if (touch) return;
           const rect = event.currentTarget.getBoundingClientRect();
-          setPreview({ type, top: previewTop(rect, leaving(type).length > 0), left: previewLeft(rect) });
+          setPreview({ type, top: previewTop(rect, leaving(type).cards.length > 0), left: previewLeft(rect) });
         }}
         onMouseLeave={() => setPreview(null)}
       >
@@ -105,7 +108,7 @@ export function Market({ game, intents, coins, onPerform }: Props) {
             style={{ top: preview.top, left: preview.left, '--card-w': `${PREVIEW_WIDTH}px`, '--card-h': `${PREVIEW_HEIGHT}px` } as CSSProperties}
           >
             <CardView type={preview.type} size="large" />
-            {previewLeaving.length > 0 && <LeavingNote cards={previewLeaving} />}
+            {previewLeaving.cards.length > 0 && <LeavingNote leaving={previewLeaving} />}
           </div>,
           document.body,
         )}
@@ -136,7 +139,7 @@ export function Market({ game, intents, coins, onPerform }: Props) {
         >
           <div className="market-card__view" style={{ '--card-w': `${PREVIEW_WIDTH}px`, '--card-h': `${PREVIEW_HEIGHT}px` } as CSSProperties}>
             <CardView type={inspected} />
-            {inspectedLeaving.length > 0 && <LeavingNote cards={inspectedLeaving} />}
+            {inspectedLeaving.cards.length > 0 && <LeavingNote leaving={inspectedLeaving} />}
           </div>
         </Dialog>
       )}
@@ -144,7 +147,12 @@ export function Market({ game, intents, coins, onPerform }: Props) {
   );
 }
 
-function LeavingNote({ cards }: { cards: Card[] }) {
+function LeavingNote({ leaving: { cards, keepable } }: { leaving: Leaving }) {
   const m = useMessages();
-  return <p className="leaving-note">{m.game.leavesGame(cards.map((card) => m.cards[card.type]).join(', '), cards.length)}</p>;
+  return (
+    <p className="leaving-note">
+      {m.game.leavesGame(cards.map((card) => m.cards[card.type]).join(', '), cards.length)}
+      {keepable && <span className="leaving-note__hint">{m.game.keepBySelectingMore(cards.length)}</span>}
+    </p>
+  );
 }

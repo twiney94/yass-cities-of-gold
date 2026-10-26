@@ -37,6 +37,10 @@ export const cardsRemovedBy = (game: GameState, action: Action): Card[] => {
   return result.ok ? result.events.flatMap((event) => (event.type === 'cardsRemoved' ? event.cards : [])) : [];
 };
 
+export const keptBySelectingMore = (game: GameState, action: Action): boolean =>
+  action.type === 'buy' &&
+  cardsRemovedBy(game, { ...action, cardIds: game.players[game.turn.player]!.hand.map((card) => card.id) }).length === 0;
+
 // Everything the current selection lets the player do, each already checked against the rules.
 export const computeIntents = (game: GameState, selection: Selection): Intents => {
   const intents: Intents = { board: new Map(), market: new Map(), play: null, removal: null, endTurn: null };

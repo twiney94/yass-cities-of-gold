@@ -177,6 +177,7 @@ export const en = {
     removed: 'Removed',
     singleUse: 'Leaves the game once its power is used',
     leavesGame: (cards: string, count: number) => `${count === 1 ? 'Leaves' : 'Leave'} the game: ${cards}`,
+    keepBySelectingMore: (count: number) => `Select more cards to keep ${count === 1 ? 'it' : 'them'}`,
     play: (card: string) => `Play ${card}`,
     remove: (count: number) => `Remove ${plural(count, 'card')}`,
     keepAll: 'Keep them all',

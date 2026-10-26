@@ -177,6 +177,7 @@ export const fr: Messages = {
     removed: 'Retirées',
     singleUse: 'Quitte la partie quand sa puissance est utilisée',
     leavesGame: (cards: string, count: number) => `${count === 1 ? 'Quitte' : 'Quittent'} la partie : ${cards}`,
+    keepBySelectingMore: (count: number) => `Sélectionnez plus de cartes pour garder ${count === 1 ? 'cette carte' : 'ces cartes'}`,
     play: (card: string) => `Jouer ${card}`,
     remove: (count: number) => `Retirer ${plural(count, 'carte')}`,
     keepAll: 'Tout garder',
