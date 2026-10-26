@@ -4,7 +4,7 @@ import { at, trackBoard } from '../engine/testing/boards';
 import { newGame } from '../engine/testing/fixtures';
 import { en } from './i18n/en';
 import { fr } from './i18n/fr';
-import { describeEvents, logText, playBanner, recolor } from './labels';
+import { describeEvents, logText, playBanner, recolor, sortedByType } from './labels';
 
 const players = [
   { name: 'Red', hex: '#d9483b' },
@@ -82,5 +82,19 @@ describe('playBanner', () => {
 
   it('shows nothing for actions without cards', () => {
     expect(playBanner([{ type: 'pieceMoved', pieceId: 1, from: at(0), to: at(1) }])).toBeNull();
+  });
+});
+
+describe('sortedByType', () => {
+  it('lists a pile the same way whatever order its cards are in', () => {
+    const pile = [
+      { id: 4, type: 'explorer' as const },
+      { id: 1, type: 'traveler' as const },
+      { id: 7, type: 'explorer' as const },
+      { id: 2, type: 'sailor' as const },
+    ];
+
+    expect(sortedByType(pile)).toEqual(sortedByType([...pile].reverse()));
+    expect(sortedByType(pile).map((card) => card.id)).toEqual([4, 7, 1, 2]);
   });
 });

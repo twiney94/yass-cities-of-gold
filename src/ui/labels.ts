@@ -1,6 +1,6 @@
 import type { GameEvent } from '../engine/actions';
 import type { BlockadeId } from '../engine/board';
-import type { CardType } from '../engine/cards';
+import { CARDS, type CardType } from '../engine/cards';
 import type { Card, GameState } from '../engine/state';
 import type { Messages } from './i18n/en';
 import type { Intents } from './intents';
@@ -60,6 +60,12 @@ export type LogEntry =
   | { kind: 'finalRound'; player: number; last: boolean }
   | { kind: 'turn'; player: number }
   | { kind: 'won'; player: number };
+
+const CARD_ORDER = Object.keys(CARDS) as CardType[];
+
+// Grouped by card so a shown draw pile never gives away the order its cards will be drawn in.
+export const sortedByType = (cards: Card[]): Card[] =>
+  [...cards].sort((a, b) => CARD_ORDER.indexOf(a.type) - CARD_ORDER.indexOf(b.type) || a.id - b.id);
 
 export type Banner = { player: number; verb: 'play' | 'buy' | 'take'; cards: Card[] };
 

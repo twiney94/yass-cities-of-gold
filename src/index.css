@@ -1955,6 +1955,12 @@ h3 {
   max-width: min(760px, 100%);
 }
 
+.discard-dialog__note {
+  margin: 0 0 12px;
+  text-align: center;
+  font-size: 13px;
+}
+
 .discard-dialog__cards {
   display: flex;
   flex-wrap: wrap;

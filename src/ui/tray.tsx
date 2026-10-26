@@ -4,6 +4,7 @@ import { CardView } from './CardView';
 import { Dialog } from './Dialog';
 import { CARD_WIDTH, type CardSize } from './cardSizes';
 import { useMessages } from './i18n';
+import { sortedByType } from './labels';
 
 // The card width comes from CSS (--card-w), so the fan spacing follows the breakpoints.
 const useRowMetrics = (ref: RefObject<HTMLElement | null>, fallback: number) => {
@@ -79,7 +80,9 @@ function Stack({ cards, faceDown }: { cards: Card[]; faceDown: boolean }) {
   );
 }
 
-function PileDialog({ title, cards, onClose }: { title: string; cards: Card[]; onClose: () => void }) {
+type PileDialogProps = { title: string; cards: Card[]; note?: string; onClose: () => void };
+
+function PileDialog({ title, cards, note, onClose }: PileDialogProps) {
   const m = useMessages();
   return (
     <Dialog
@@ -92,8 +95,9 @@ function PileDialog({ title, cards, onClose }: { title: string; cards: Card[]; o
         </button>
       }
     >
+      {note && <p className="discard-dialog__note muted">{note}</p>}
       <div className="discard-dialog__cards">
-        {[...cards].reverse().map((card) => (
+        {cards.map((card) => (
           <CardView key={card.id} type={card.type} />
         ))}
       </div>
@@ -111,7 +115,7 @@ type TrayProps = {
 
 export function Tray({ ref, player, handHidden, selected, onToggle }: TrayProps) {
   const m = useMessages();
-  const [open, setOpen] = useState<'discard' | 'removed' | null>(null);
+  const [open, setOpen] = useState<'draw' | 'discard' | 'removed' | null>(null);
   const owned = player.drawPile.length + player.hand.length + player.played.length + player.discard.length;
   return (
     <footer className="tray" ref={ref}>
@@ -130,7 +134,15 @@ export function Tray({ ref, player, handHidden, selected, onToggle }: TrayProps)
             {m.game.removed} · {player.removed.length}
           </span>
         </div>
-        <Stack cards={player.drawPile} faceDown />
+        <button
+          type="button"
+          className="stack-button"
+          aria-label={m.game.seeDraw}
+          disabled={player.drawPile.length === 0}
+          onClick={() => setOpen('draw')}
+        >
+          <Stack cards={player.drawPile} faceDown />
+        </button>
         <span className="zone__count">
           {player.drawPile.length}/{owned}
         </span>
@@ -160,8 +172,20 @@ export function Tray({ ref, player, handHidden, selected, onToggle }: TrayProps)
         <span className="zone__count">{player.discard.length}</span>
         <span className="zone__label">{m.game.discard}</span>
       </div>
-      {open === 'discard' && <PileDialog title={m.game.discardTitle(player.discard.length)} cards={player.discard} onClose={() => setOpen(null)} />}
-      {open === 'removed' && <PileDialog title={m.game.removedTitle(player.removed.length)} cards={player.removed} onClose={() => setOpen(null)} />}
+      {open === 'draw' && (
+        <PileDialog
+          title={m.game.drawTitle(player.drawPile.length)}
+          cards={sortedByType(player.drawPile)}
+          note={m.game.drawNote}
+          onClose={() => setOpen(null)}
+        />
+      )}
+      {open === 'discard' && (
+        <PileDialog title={m.game.discardTitle(player.discard.length)} cards={[...player.discard].reverse()} onClose={() => setOpen(null)} />
+      )}
+      {open === 'removed' && (
+        <PileDialog title={m.game.removedTitle(player.removed.length)} cards={[...player.removed].reverse()} onClose={() => setOpen(null)} />
+      )}
     </footer>
   );
 }
