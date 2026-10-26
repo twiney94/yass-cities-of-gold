@@ -32,6 +32,11 @@ export const activePiece = (game: GameState, selection: Selection): PieceId | nu
 
 const valid = (game: GameState, action: Action): Action | null => (applyAction(game, action).ok ? action : null);
 
+export const cardsRemovedBy = (game: GameState, action: Action): Card[] => {
+  const result = applyAction(game, action);
+  return result.ok ? result.events.flatMap((event) => (event.type === 'cardsRemoved' ? event.cards : [])) : [];
+};
+
 // Everything the current selection lets the player do, each already checked against the rules.
 export const computeIntents = (game: GameState, selection: Selection): Intents => {
   const intents: Intents = { board: new Map(), market: new Map(), play: null, removal: null, endTurn: null };

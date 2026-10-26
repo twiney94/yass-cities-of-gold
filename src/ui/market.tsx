@@ -2,19 +2,20 @@ import { type CSSProperties, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Action } from '../engine/actions';
 import { ALL_CARDS, type CardType } from '../engine/cards';
-import type { GameState } from '../engine/state';
+import type { Card, GameState } from '../engine/state';
 import { CardView } from './CardView';
 import { Dialog } from './Dialog';
 import { SuitIcon } from './art/SuitIcon';
 import { CARD_WIDTH } from './cardSizes';
 import { cx } from './cx';
 import { useMessages } from './i18n';
-import type { Intents } from './intents';
+import { type Intents, cardsRemovedBy } from './intents';
 
 const RESERVE = ALL_CARDS.filter((card) => card.supply.from === 'reserve').map((card) => card.type);
 const PREVIEW_WIDTH = CARD_WIDTH.large * 1.5;
 const PREVIEW_HEIGHT = 234;
 const PREVIEW_CAPTION = 34;
+const PREVIEW_NOTE = 36;
 const PREVIEW_GAP = 18;
 
 const previewLeft = (pile: DOMRect) =>
@@ -22,7 +23,8 @@ const previewLeft = (pile: DOMRect) =>
     ? pile.right + PREVIEW_GAP
     : Math.max(8, pile.left - PREVIEW_GAP - PREVIEW_WIDTH);
 
-const previewTop = (pile: DOMRect) => Math.max(8, Math.min(pile.top, window.innerHeight - PREVIEW_HEIGHT - PREVIEW_CAPTION - 8));
+const previewTop = (pile: DOMRect, note: boolean) =>
+  Math.max(8, Math.min(pile.top, window.innerHeight - PREVIEW_HEIGHT - PREVIEW_CAPTION - (note ? PREVIEW_NOTE : 0) - 8));
 
 const formatCoins = (coins: number) => {
   const whole = Math.floor(coins);
@@ -41,6 +43,12 @@ export function Market({ game, intents, coins, onPerform }: Props) {
   const inspectedAction = inspected && intents.market.get(inspected);
   const { slots, remaining } = game.market;
   const open = slots.includes(null);
+  const leaving = (type: CardType) => {
+    const action = intents.market.get(type);
+    return action ? cardsRemovedBy(game, action) : [];
+  };
+  const previewLeaving = preview ? leaving(preview.type) : [];
+  const inspectedLeaving = inspected ? leaving(inspected) : [];
 
   const pile = (type: CardType) => {
     const left = remaining[type] ?? 0;
@@ -53,7 +61,7 @@ export function Market({ game, intents, coins, onPerform }: Props) {
         onMouseEnter={(event) => {
           if (touch) return;
           const rect = event.currentTarget.getBoundingClientRect();
-          setPreview({ type, top: previewTop(rect), left: previewLeft(rect) });
+          setPreview({ type, top: previewTop(rect, leaving(type).length > 0), left: previewLeft(rect) });
         }}
         onMouseLeave={() => setPreview(null)}
       >
@@ -97,6 +105,7 @@ export function Market({ game, intents, coins, onPerform }: Props) {
             style={{ top: preview.top, left: preview.left, '--card-w': `${PREVIEW_WIDTH}px`, '--card-h': `${PREVIEW_HEIGHT}px` } as CSSProperties}
           >
             <CardView type={preview.type} size="large" />
+            {previewLeaving.length > 0 && <LeavingNote cards={previewLeaving} />}
           </div>,
           document.body,
         )}
@@ -127,9 +136,15 @@ export function Market({ game, intents, coins, onPerform }: Props) {
         >
           <div className="market-card__view" style={{ '--card-w': `${PREVIEW_WIDTH}px`, '--card-h': `${PREVIEW_HEIGHT}px` } as CSSProperties}>
             <CardView type={inspected} />
+            {inspectedLeaving.length > 0 && <LeavingNote cards={inspectedLeaving} />}
           </div>
         </Dialog>
       )}
     </section>
   );
+}
+
+function LeavingNote({ cards }: { cards: Card[] }) {
+  const m = useMessages();
+  return <p className="leaving-note">{m.game.leavesGame(cards.map((card) => m.cards[card.type]).join(', '), cards.length)}</p>;
 }

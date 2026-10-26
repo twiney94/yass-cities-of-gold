@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { at, trackBoard } from '../engine/testing/boards';
 import { addPiece, newGame, placePiece, run, setDrawPile, setHand } from '../engine/testing/fixtures';
-import { type Selection, computeIntents } from './intents';
+import { type Selection, cardsRemovedBy, computeIntents } from './intents';
 
 const game = (track: string) => {
   const state = newGame(trackBoard(track));
@@ -103,5 +103,28 @@ describe('computeIntents', () => {
     expect(intents.removal).toEqual({ type: 'removeFromHand', cardIds: [explorer!.id] });
     expect(intents.board.size + intents.market.size).toBe(0);
     expect(intents.endTurn).toBeNull();
+  });
+});
+
+describe('cardsRemovedBy', () => {
+  it('names a single-use coin card the purchase spends at full value', () => {
+    const state = game('G1');
+    const [chest] = setHand(state, 0, 'treasureChest');
+
+    expect(cardsRemovedBy(state, { type: 'buy', cardType: 'trailblazer', cardIds: [chest!.id] })).toEqual([chest]);
+  });
+
+  it('names nothing when the single-use card only counts as half a coin', () => {
+    const state = game('G1');
+    const [photographer, chest] = setHand(state, 0, 'photographer', 'treasureChest');
+
+    expect(cardsRemovedBy(state, { type: 'buy', cardType: 'photographer', cardIds: [photographer!.id, chest!.id] })).toEqual([]);
+  });
+
+  it('names the Telegraph when it takes a free card', () => {
+    const state = game('G1');
+    const [telegraph] = setHand(state, 0, 'transmitter');
+
+    expect(cardsRemovedBy(state, { type: 'playTransmitter', cardId: telegraph!.id, take: 'scout' })).toEqual([telegraph]);
   });
 });

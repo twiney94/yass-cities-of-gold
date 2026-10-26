@@ -176,6 +176,7 @@ export const en = {
     faceDown: 'Face-down card',
     removed: 'Removed',
     singleUse: 'Leaves the game once its power is used',
+    leavesGame: (cards: string, count: number) => `${count === 1 ? 'Leaves' : 'Leave'} the game: ${cards}`,
     play: (card: string) => `Play ${card}`,
     remove: (count: number) => `Remove ${plural(count, 'card')}`,
     keepAll: 'Keep them all',

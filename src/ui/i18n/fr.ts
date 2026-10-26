@@ -176,6 +176,7 @@ export const fr: Messages = {
     faceDown: 'Carte face cachée',
     removed: 'Retirées',
     singleUse: 'Quitte la partie quand sa puissance est utilisée',
+    leavesGame: (cards: string, count: number) => `${count === 1 ? 'Quitte' : 'Quittent'} la partie : ${cards}`,
     play: (card: string) => `Jouer ${card}`,
     remove: (count: number) => `Retirer ${plural(count, 'carte')}`,
     keepAll: 'Tout garder',

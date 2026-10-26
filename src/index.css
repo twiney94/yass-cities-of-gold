@@ -2528,6 +2528,27 @@ h3 {
 .market-card__view {
   display: grid;
   justify-items: center;
+  gap: 14px;
+}
+
+.leaving-note {
+  margin: 0;
+  padding: 0.35em 0.8em;
+  border: 1px solid #e0664f;
+  border-radius: 0.4em;
+  background: #4a1a12;
+  color: #ffe3da;
+  font: 700 13px / 1.2 var(--display);
+  letter-spacing: 0.03em;
+  text-align: center;
+}
+
+.preview .leaving-note {
+  position: absolute;
+  top: calc(100% + 46px);
+  left: 50%;
+  translate: -50% 0;
+  white-space: nowrap;
 }
 
 .fx-layer {
