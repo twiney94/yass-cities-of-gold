@@ -5,7 +5,7 @@ import type { PlayerColor } from '../labels';
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
 
-const LEVEL: Record<BotLevel, string> = { easy: 'Easy', normal: 'Normal', strong: 'Strong' };
+const LEVEL: Record<BotLevel, string> = { easy: 'Easy', normal: 'Normal', hard: 'Hard', extreme: 'Extreme' };
 const DIFFICULTY: Record<Difficulty, string> = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
 
 export const en = {

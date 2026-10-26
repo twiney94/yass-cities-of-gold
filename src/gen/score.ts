@@ -98,7 +98,7 @@ export const botRounds = (board: Board, games: number, playerCount: 2 | 3 | 4 = 
     let state = createGame({ board, playerCount, seed: i + 1 });
     let turns = 0;
     while (state.status.kind !== 'over' && turns < MAX_BOT_ROUNDS * playerCount) {
-      const actions = botStep(state);
+      const actions = botStep(state, 'hard');
       const result = applyActions(state, actions);
       if (!result.ok) throw new Error(`Bot played an illegal move: ${result.error}`);
       state = result.state;

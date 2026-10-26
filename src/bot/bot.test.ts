@@ -19,7 +19,7 @@ const game = (track: string, blockades: Blockade[] = []) => {
 const playTurn = (state: GameState): GameState => {
   let current = state;
   for (let step = 0; step < 30; step++) {
-    const actions = botStep(current);
+    const actions = botStep(current, 'hard');
     current = run(current, ...actions).state;
     if (actions.some((action) => action.type === 'endTurn')) return current;
   }
@@ -45,14 +45,14 @@ describe('botStep', () => {
     const [, cartographer] = setHand(state, 0, 'explorer', 'cartographer');
     setDrawPile(state, 0, 'scout', 'scout');
 
-    expect(botStep(state)).toEqual([{ type: 'playAction', cardId: cartographer!.id }]);
+    expect(botStep(state, 'hard')).toEqual([{ type: 'playAction', cardId: cartographer!.id }]);
   });
 
   it('chains its cards to reach the City of Gold when it can', () => {
     const state = game('G1 G1 G1 G1 FG1');
     setHand(state, 0, 'scout', 'scout', 'traveler');
 
-    const after = run(state, ...botStep(state)).state;
+    const after = run(state, ...botStep(state, 'hard')).state;
 
     expect(after.pieces[0]!.at).toBe('eldorado');
   });
@@ -74,8 +74,8 @@ describe('botStep', () => {
     setDrawPile(state, 0, 'scout');
     setDiscard(state, 0, 'traveler', 'traveler', 'explorer', 'sailor', 'captain');
 
-    const drawn = run(state, ...botStep(state)).state;
-    const removal = botStep(drawn);
+    const drawn = run(state, ...botStep(state, 'hard')).state;
+    const removal = botStep(drawn, 'hard');
 
     expect(removal).toEqual([{ type: 'removeFromHand', cardIds: [drawn.players[0]!.hand.find((c) => c.type === 'explorer')!.id] }]);
   });
@@ -108,8 +108,8 @@ describe('easy level', () => {
 });
 
 describe('bot-only games on the stand-in route', () => {
-  const games = (['easy', 'normal', 'strong'] as const).flatMap((level) =>
-    ([2, 3, 4] as const).flatMap((players) => (level === 'normal' ? [1, 2, 3, 4] : [1, 2]).map((seed) => ({ level, players, seed }))),
+  const games = (['easy', 'normal', 'hard', 'extreme'] as const).flatMap((level) =>
+    ([2, 3, 4] as const).flatMap((players) => (level === 'hard' ? [1, 2, 3, 4] : [1, 2]).map((seed) => ({ level, players, seed }))),
   );
 
   it.each(games)('$level, $players players, seed $seed: legal moves only, finished in reasonable time', ({ level, players, seed }) => {

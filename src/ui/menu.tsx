@@ -18,6 +18,7 @@ import { PawnIcon } from './art/PawnIcon';
 import { CheckIcon, CopyIcon, CrownIcon, PlayIcon, RefreshIcon } from './art/setupIcons';
 import { type Option, Segmented } from './Segmented';
 import { cx } from './cx';
+import { withCurrentLevels } from './save';
 import { type Messages, useMessages } from './i18n';
 import { AboutDialog, RulesDialog } from './info';
 import { useIntro } from './intro';
@@ -41,7 +42,7 @@ const PORTRAITS: Record<PlayerColor, string> = {
   black: captain,
 };
 const COUNTS: Option<number>[] = [2, 3, 4].map((count) => ({ value: count, label: String(count) }));
-const LEVELS: BotLevel[] = ['easy', 'normal', 'strong'];
+const LEVELS: BotLevel[] = ['easy', 'normal', 'hard', 'extreme'];
 const MAPS: { value: MapChoice; pips: number }[] = [
   { value: 'standin', pips: 0 },
   { value: 'easy', pips: 1 },
@@ -74,12 +75,12 @@ const validSeat = (seat: Seat, index: number, mode: Mode) =>
 const readSetup = (mode: Mode): Setup | null => {
   try {
     const setup = JSON.parse(localStorage.getItem(setupKey(mode)) ?? 'null') as Setup | null;
-    const seats = setup?.seats;
-    if (!setup || !Array.isArray(seats) || seats.length < 2 || seats.length > 4) return null;
+    if (!setup || !Array.isArray(setup.seats) || setup.seats.length < 2 || setup.seats.length > 4) return null;
+    const seats = withCurrentLevels(setup.seats);
     if (!seats.every((seat, i) => validSeat(seat, i, mode))) return null;
     if (new Set(seats.map((seat) => seat.color)).size !== seats.length) return null;
     if (!MAPS.some((map) => map.value === setup.choice)) return null;
-    return setup;
+    return { ...setup, seats };
   } catch {
     return null;
   }

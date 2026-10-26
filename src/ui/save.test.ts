@@ -26,6 +26,12 @@ describe('saved games', () => {
     expect(parseSave(JSON.stringify({ ...save, version: 0 }))).toBeNull();
   });
 
+  it('resume the strongest bot, stored as strong, as the extreme bot', () => {
+    const stored = JSON.parse(serializeSave(save));
+    stored.seats[1].level = 'strong';
+    expect(parseSave(JSON.stringify(stored))?.seats[1]).toEqual({ kind: 'bot', level: 'extreme', color: 'blue' });
+  });
+
   it('resume with empty removed piles when stored before players kept them', () => {
     const stored = JSON.parse(serializeSave(save));
     for (const player of stored.game.players) delete player.removed;

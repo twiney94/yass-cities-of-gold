@@ -7,7 +7,7 @@ import { nextRandom } from '../engine/rng';
 import { applyActions } from '../engine/rules';
 import type { Card, GameState, PlayerState } from '../engine/state';
 
-export type BotLevel = 'easy' | 'normal' | 'strong';
+export type BotLevel = 'easy' | 'normal' | 'hard' | 'extreme';
 
 type Effort = Map<HexKey, number>;
 type Option = { score: number; actions: Action[] };
@@ -41,8 +41,6 @@ const UNLOCK_BONUS = 3;
 const SOON_STEPS = 4;
 const TRANSMITTER_MIN_VALUE = 2.5;
 const MIN_DECK_SIZE = 6;
-const EASY_SLIP = 0.5;
-const EASY_CHOICES = 3;
 const LOOKAHEAD_MOVES = 6;
 const LOOKAHEAD_BUYS = 3;
 const SIMULATED_STEPS = 12;
@@ -304,82 +302,56 @@ const drawingCard = (state: GameState, me: PlayerState): Card | null => {
   );
 };
 
+// slip is how often the bot settles for its second-best move; buyChoices is how many of the best purchases it picks
+// from at random. Chaining plays several movement cards in one go.
+type Style = { chaining: boolean; slip: number; buyChoices: number; thins: boolean; keeps: boolean };
+
+const STYLES: Record<Exclude<BotLevel, 'extreme'>, Style> = {
+  easy: { chaining: false, slip: 0.5, buyChoices: 3, thins: false, keeps: false },
+  normal: { chaining: false, slip: 0.2, buyChoices: 1, thins: true, keeps: false },
+  hard: { chaining: true, slip: 0, buyChoices: 1, thins: true, keeps: true },
+};
+
 // The next chunk of the current player's turn: one movement, one card play, a purchase, or ending the turn.
-export const botStep = (state: GameState, level: BotLevel = 'normal'): Action[] => {
-  switch (level) {
-    case 'easy':
-      return easyStep(state);
-    case 'normal':
-      return normalStep(state);
-    case 'strong':
-      return strongStep(state);
-  }
-};
+export const botStep = (state: GameState, level: BotLevel): Action[] =>
+  level === 'extreme' ? extremeStep(state) : styledStep(state, STYLES[level]);
 
-const normalStep = (state: GameState): Action[] => {
-  const { turn } = state;
-  const me = state.players[turn.player]!;
-  if (turn.pending) return [{ type: 'removeFromHand', cardIds: cardsToRemove(state, turn.pending.max) }];
-
-  const draw = drawingCard(state, me);
-  if (draw) return [{ type: 'playAction', cardId: draw.id }];
-
-  const effort = effortToFinish(state);
-  const left = effortLeft(state, effort);
-  const appetite = appetiteFor(left);
-  const moves = moveOptions(state, effort, appetite)
-    .filter((option) => option.score > MIN_MOVE_SCORE)
-    .sort((a, b) => b.score - a.score);
-  const move = moves.find((option) => applyActions(state, option.actions).ok);
-  if (move) return move.actions;
-
-  const demand = demandAhead(state, effort);
-  const transmitter = me.hand.find((card) => card.type === 'transmitter');
-  const take = transmitter && bestGain(state, demand);
-  if (transmitter && take) return [{ type: 'playTransmitter', cardId: transmitter.id, take }];
-
-  const [purchase] = first(purchases(state, demand, left), 1);
-  if (purchase) return [purchase];
-
-  return [{ type: 'endTurn', discard: me.hand.filter((card) => !worthKeeping(card, demand)).map((card) => card.id) }];
-};
-
-// Easy bots vary their choices without touching the game's random state, so games still replay identically.
+// Bots vary their choices without touching the game's random state, so games still replay identically.
 const noise = (state: GameState, salt: number): number => {
   const me = state.players[state.turn.player]!;
   const mixed = Math.imul(salt + me.hand.length * 31 + me.played.length * 7 + me.discard.length * 3 + state.box.length, 2654435761);
   return nextRandom((state.rng ^ mixed) >>> 0).value;
 };
 
-// Moves one card at a time, sometimes settles for its second-best idea, buys loosely and never thins or keeps cards.
-const easyStep = (state: GameState): Action[] => {
+const styledStep = (state: GameState, style: Style): Action[] => {
   const { turn } = state;
   const me = state.players[turn.player]!;
-  if (turn.pending) return [{ type: 'removeFromHand', cardIds: [] }];
+  if (turn.pending) return [{ type: 'removeFromHand', cardIds: style.thins ? cardsToRemove(state, turn.pending.max) : [] }];
 
   const draw = drawingCard(state, me);
   if (draw) return [{ type: 'playAction', cardId: draw.id }];
 
   const effort = effortToFinish(state);
   const left = effortLeft(state, effort);
-  const moves = moveOptions(state, effort, appetiteFor(left), false)
+  const moves = moveOptions(state, effort, appetiteFor(left), style.chaining)
     .filter((option) => option.score > MIN_MOVE_SCORE)
     .sort((a, b) => b.score - a.score);
   const choices = first(
     moves.filter((option) => applyActions(state, option.actions).ok),
-    2,
+    style.slip > 0 ? 2 : 1,
   );
-  if (choices.length > 0) return choices[choices.length > 1 && noise(state, 1) < EASY_SLIP ? 1 : 0]!.actions;
+  if (choices.length > 0) return choices[choices.length > 1 && noise(state, 1) < style.slip ? 1 : 0]!.actions;
 
   const demand = demandAhead(state, effort);
   const transmitter = me.hand.find((card) => card.type === 'transmitter');
   const take = transmitter && bestGain(state, demand);
   if (transmitter && take) return [{ type: 'playTransmitter', cardId: transmitter.id, take }];
 
-  const buys = first(purchases(state, demand, left), EASY_CHOICES);
-  if (buys.length > 0) return [buys[Math.floor(noise(state, 2) * buys.length)]!];
+  const buys = first(purchases(state, demand, left), style.buyChoices);
+  if (buys.length > 0) return [buys[style.buyChoices > 1 ? Math.floor(noise(state, 2) * buys.length) : 0]!];
 
-  return [{ type: 'endTurn', discard: me.hand.map((card) => card.id) }];
+  const discard = style.keeps ? me.hand.filter((card) => !worthKeeping(card, demand)) : me.hand;
+  return [{ type: 'endTurn', discard: discard.map((card) => card.id) }];
 };
 
 const pieceEffort = (state: GameState, effort: Effort): number =>
@@ -389,7 +361,7 @@ const pieceEffort = (state: GameState, effort: Effort): number =>
   );
 
 // What a whole turn earned: effort covered, starting cards thinned out and blockades taken. Purchases are left to
-// the normal bot's end-of-turn buying with whatever is left, which tournaments showed beats weighing them in here.
+// the hard bot's end-of-turn buying with whatever is left, which tournaments showed beats weighing them in here.
 const turnValue = (before: GameState, after: GameState): number => {
   const player = before.turn.player;
   const progress = pieceEffort(before, effortToFinish(before)) - pieceEffort(after, effortToFinish(after));
@@ -398,7 +370,7 @@ const turnValue = (before: GameState, after: GameState): number => {
   return progress + thinned * THINNING_BONUS + blockades * BLOCKADE_VALUE;
 };
 
-// Plays the rest of the turn the normal way, stopping before anything that would reveal unknown cards.
+// Plays the rest of the turn the hard bot's way, stopping before anything that would reveal unknown cards.
 const finishTurn = (state: GameState, opening: Action[]): GameState | null => {
   if (opening.some((action) => action.type === 'endTurn')) return state;
   const opened = applyActions(state, opening);
@@ -406,7 +378,7 @@ const finishTurn = (state: GameState, opening: Action[]): GameState | null => {
   let current = opened.state;
   for (let step = 0; step < SIMULATED_STEPS; step++) {
     if (current.turn.player !== state.turn.player || current.turn.pending || current.status.kind === 'over') break;
-    const next = normalStep(current);
+    const next = styledStep(current, STYLES.hard);
     if (next.some((action) => action.type === 'endTurn' || action.type === 'playAction')) break;
     const result = applyActions(current, next);
     if (!result.ok) break;
@@ -415,10 +387,10 @@ const finishTurn = (state: GameState, opening: Action[]): GameState | null => {
   return current;
 };
 
-// Looks one turn ahead: tries the best few openings, finishes each turn as the normal bot would, and keeps the
+// Looks one turn ahead: tries the best few openings, finishes each turn as the hard bot would, and keeps the
 // opening whose whole turn is worth the most.
-const strongStep = (state: GameState): Action[] => {
-  const baseline = normalStep(state);
+const extremeStep = (state: GameState): Action[] => {
+  const baseline = styledStep(state, STYLES.hard);
   const me = state.players[state.turn.player]!;
   if (state.turn.pending || baseline.some((action) => action.type === 'playAction' || action.type === 'removeFromHand')) {
     return baseline;

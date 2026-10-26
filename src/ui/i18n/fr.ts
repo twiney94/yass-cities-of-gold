@@ -4,7 +4,7 @@ import type { Messages } from './en';
 
 const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? 's' : ''}`;
 
-const LEVEL: Record<BotLevel, string> = { easy: 'Facile', normal: 'Normal', strong: 'Fort' };
+const LEVEL: Record<BotLevel, string> = { easy: 'Facile', normal: 'Normal', hard: 'Difficile', extreme: 'Extrême' };
 const DIFFICULTY: Record<Difficulty, string> = { easy: 'Facile', medium: 'Moyen', hard: 'Difficile' };
 const TRAIL: Record<Difficulty, string> = { easy: 'Piste facile', medium: 'Piste moyenne', hard: 'Piste difficile' };
 

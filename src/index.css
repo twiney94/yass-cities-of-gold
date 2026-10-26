@@ -3183,6 +3183,12 @@ h3 {
     margin-bottom: 8px;
   }
 
+  .seat__level .segmented__option {
+    min-width: 0;
+    padding-inline: clamp(3px, 1.3vw, 8px);
+    font-size: clamp(11px, 3.4vw, 13px);
+  }
+
   .board__controls .btn {
     display: grid;
     place-items: center;

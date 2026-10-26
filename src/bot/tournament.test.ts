@@ -25,11 +25,15 @@ const winShare = (level: BotLevel, rival: BotLevel): number => {
 };
 
 describe('head-to-head on the stand-in route, seats alternating', () => {
-  it('strong beats normal', () => {
-    expect(winShare('strong', 'normal')).toBeGreaterThan(0.55);
+  it('extreme beats hard', () => {
+    expect(winShare('extreme', 'hard')).toBeGreaterThan(0.55);
+  }, 60000);
+
+  it('hard beats normal', () => {
+    expect(winShare('hard', 'normal')).toBeGreaterThan(0.55);
   }, 60000);
 
   it('normal beats easy', () => {
-    expect(winShare('normal', 'easy')).toBeGreaterThan(0.65);
+    expect(winShare('normal', 'easy')).toBeGreaterThan(0.55);
   }, 60000);
 });

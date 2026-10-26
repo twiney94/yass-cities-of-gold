@@ -2,7 +2,7 @@
 
 A deck-building race through generated jungles to the lost City of Gold. Build your expedition from the market, cut, paddle and pay your way across rivers, villages and mountain passes, and reach the golden city first.
 
-Play against friends on one device, or against bots (Easy, Normal or Strong). Every map is generated for the difficulty you pick and comes with a short code, so a good map can be replayed.
+Play against friends on one device, or against bots (Easy, Normal, Hard or Extreme). Every map is generated for the difficulty you pick and comes with a short code, so a good map can be replayed.
 
 The game speaks English and French: it follows the browser's language and remembers the one you pick.
 
